@@ -11,9 +11,11 @@ allowed to push the ship date.
 - [x] `test` and `typecheck` scripts, both running clean (`typecheck` clean now;
       `test` is wired but has no test files until Phase 1 starts)
 - [x] Memory files and spec committed to repo root
-- [ ] Pushed to GitHub
-- [ ] Vercel connected to the repo, empty scaffold loading from `*.vercel.app`
-- [ ] PyCharm Vitest run configuration created (right-click a `*.test.ts`)
+- [x] Pushed to GitHub (github.com/Bokang-Mamarara/air-leak-survey, private)
+- [x] Vercel connected to the repo, empty scaffold loading from `*.vercel.app`
+      (https://air-leak-survey1.vercel.app/)
+- [ ] PyCharm Vitest run configuration created (right-click a `*.test.ts`) —
+      deferred to Phase 1, once a test file exists to right-click
 - [ ] `src/calc/constants.ts` — every number named, sourced, tariff and specific power `null`
 - [ ] `src/calc/types.ts` — `LeakInput`, `Range`, `LeakResult`, `TariffSchedule`, `CompressorSpec`
 - [ ] `orifice.test.ts` written and failing

@@ -94,3 +94,12 @@ later if lint errors become a real problem, with the day-cost stated then.
 **2026-09-07 — Renamed the unborn branch from `master` to `main` before the
 first commit** — `CLAUDE.md` says to work on `main`; git still defaults new
 repos to `master` locally. Free to do before any commits existed.
+
+**2026-09-07 — Repo created private, Vercel connected via dashboard import,
+not CLI** — `gh repo create` was fine for GitHub (device-code browser flow
+completes non-interactively once approved). The Vercel CLI's `vercel login`
+is a TUI menu with no equivalent non-interactive flag, so it hangs when
+driven from a tool call. Importing the repo directly at vercel.com sidesteps
+that and is exactly what `PLAN.md` already specified — no cost, just skipped
+the CLI detour. Repo is private for now (portfolio piece, not yet in
+presentable shape); flip to public later from GitHub settings.
