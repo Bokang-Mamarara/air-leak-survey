@@ -16,17 +16,33 @@ allowed to push the ship date.
       (https://air-leak-survey1.vercel.app/)
 - [ ] PyCharm Vitest run configuration created (right-click a `*.test.ts`) —
       deferred to Phase 1, once a test file exists to right-click
-- [ ] `src/calc/constants.ts` — every number named, sourced, tariff and specific power `null`
-- [ ] `src/calc/types.ts` — `LeakInput`, `Range`, `LeakResult`, `TariffSchedule`, `CompressorSpec`
-- [ ] `orifice.test.ts` written and failing
-- [ ] `orifice.ts` — choked flow, critical ratio guard, Cd injected not hard-coded
-- [ ] `compressor.test.ts` / `compressor.ts` — theoretical and empirical, side by side
-- [ ] `cost.test.ts` / `cost.ts` — time-of-use, returns `null` when tariff unset
-- [ ] `uncertainty.test.ts` / `uncertainty.ts` — diameter band → cost band
-- [ ] `index.ts` — `evaluateLeak()` single entry point
-- [ ] `HANDCHECK.md` — 3 mm coupling at 500 kPa(g) worked by hand
-- [ ] Hand-check case asserted in `index.test.ts` and passing
-- [ ] **Gate:** no React import, no I/O anywhere in `src/calc/`
+- [x] `"strict": true` added to `tsconfig.app.json` — `null` means nothing without
+      `strictNullChecks`, and rule 3 depends on it
+- [x] `constants.test.ts` written and failing, then passing — 20 tests, including
+      the two derived constants recomputed from k and R
+- [x] `src/calc/constants.ts` — every number named, sourced, tariff and specific power `null`
+- [x] `src/calc/types.ts` — `LeakInput`, `Range`, `LeakResult`, `TariffSchedule`, `CompressorSpec`
+- [x] `orifice.test.ts` written and failing, then passing — 19 tests
+- [x] `orifice.ts` — choked flow, critical ratio guard, Cd injected not hard-coded
+- [x] `compressor.test.ts` / `compressor.ts` — theoretical and empirical, side by
+      side — 23 tests. Hand calculation and code agree on 1.3748 kW for the
+      hand-check leak
+- [x] `cost.test.ts` / `cost.ts` — time-of-use, returns `null` when tariff unset
+      — 19 tests. `HOURS_PER_YEAR` added to `constants.ts`, kept distinct from
+      the operating-hours default
+- [x] `uncertainty.test.ts` / `uncertainty.ts` — diameter band → cost band — 14
+      tests. ±30% on diameter propagates to −51%/+69% on flow and stays there
+- [x] `index.ts` — `evaluateLeak()` single entry point — 38 tests. Added
+      `flowUnavailableReason` to `LeakResult` so a non-choked line reports the
+      condition instead of throwing at the register
+- [x] `HANDCHECK.md` — 3 mm coupling at 500 kPa(g) worked by hand. Agrees with
+      the module to 6–8 significant figures on every quantity; d² propagation
+      shown explicitly
+- [x] Hand-check case asserted in `index.test.ts` and passing — 6.118 g/s,
+      5.08 L/s, 1.3748 kW, 12 043 kWh/year
+- [x] **Gate:** no React import, no I/O anywhere in `src/calc/` — every import
+      in the module files is relative; the only external one is `vitest`, in
+      test files only
 
 ## Day 2 — Level plan map
 
