@@ -7,9 +7,10 @@ allowed to push the ship date.
 
 ## Day 1 — Calculation module
 
-- [ ] Vite + React + TS scaffold, deps installed, demo content stripped
-- [ ] `test` and `typecheck` scripts, both running clean
-- [ ] Memory files and spec committed to repo root
+- [x] Vite + React + TS scaffold, deps installed, demo content stripped
+- [x] `test` and `typecheck` scripts, both running clean (`typecheck` clean now;
+      `test` is wired but has no test files until Phase 1 starts)
+- [x] Memory files and spec committed to repo root
 - [ ] Pushed to GitHub
 - [ ] Vercel connected to the repo, empty scaffold loading from `*.vercel.app`
 - [ ] PyCharm Vitest run configuration created (right-click a `*.test.ts`)

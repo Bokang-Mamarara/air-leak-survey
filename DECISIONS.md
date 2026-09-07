@@ -76,3 +76,21 @@ are pure overhead on a seven-day solo build.
 ## Decided during the build
 
 <!-- Append below. Date, decision, reason, cost. -->
+
+**2026-09-07 — Scaffolded in place, not into a nested `air-leak-survey/`
+folder** — `PLAN.md`'s Phase 0 command creates a new subdirectory, but the
+repo already existed at this root with `CLAUDE.md` and the memory files
+committed there. Scaffolding into a temp directory and moving the generated
+files up avoids a redundant nested repo root. Costs nothing; the app name
+inside `package.json` is still `air-leak-survey`.
+
+**2026-09-07 — Dropped `oxlint` from the scaffold** — the current Vite
+react-ts template bundles `oxlint` as a default dev dependency and `lint`
+script. It isn't in the approved stack (`CLAUDE.md`: React, TypeScript, Vite,
+Vitest, Leaflet, Dexie, Workbox, Recharts — anything else needs a stated
+reason). Removed rather than silently kept. Costs nothing; can be reconsidered
+later if lint errors become a real problem, with the day-cost stated then.
+
+**2026-09-07 — Renamed the unborn branch from `master` to `main` before the
+first commit** — `CLAUDE.md` says to work on `main`; git still defaults new
+repos to `master` locally. Free to do before any commits existed.
