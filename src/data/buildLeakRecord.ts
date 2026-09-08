@@ -39,6 +39,18 @@ export function buildLeakRecord(input: BuildLeakRecordInput): LeakRecord {
   // is wrong: zero flow, zero cost, the plausible-wrong-number failure mode.
   const equivalentDiameterMm = input.diameterOverrideMm ?? input.leakType.equivalentDiameterMm
 
+  // Same presence check `evaluateLeak` uses to infer provenance from an
+  // override — computed here and stored, not left for `summariseLeaks` to
+  // reconstruct later, because a typed override that happens to equal the
+  // catalogue default is indistinguishable from the default by value alone.
+  // For an open-line type the check always lands on 'measured': its
+  // catalogue diameter is null, so `diameterOverrideMm` is required and the
+  // capture screen never reaches Save without it.
+  const diameterProvenance: LeakRecord['diameterProvenance'] =
+    input.diameterOverrideMm !== undefined && input.diameterOverrideMm !== null
+      ? 'measured'
+      : 'catalogue'
+
   if (equivalentDiameterMm == null) {
     throw new Error(
       `${input.leakType.label} has no catalogue diameter and none was supplied — ` +
@@ -60,6 +72,7 @@ export function buildLeakRecord(input: BuildLeakRecordInput): LeakRecord {
     y: input.y,
     leakTypeId: input.leakType.id,
     equivalentDiameterMm,
+    diameterProvenance,
     linePressureKpaG: input.linePressureKpaGOverride ?? DEFAULT_LINE_PRESSURE_KPA_G,
     isDeliberateOpenLine: input.leakType.category === 'deliberate-open-line',
     note: input.note,

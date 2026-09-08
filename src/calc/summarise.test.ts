@@ -23,13 +23,17 @@ const smallCoupling: LoggedLeak = {
     id: 'leak-1',
     leakTypeId: 'failed-hose-coupling',
     equivalentDiameterMm: 3,
+    diameterProvenance: 'catalogue',
     linePressureKpaG: 500,
 };
 
+// 6 mm is not failed-hose-coupling's 3 mm catalogue default — a measured
+// override, same as a crew reporting a bigger-than-typical failure.
 const bigCoupling: LoggedLeak = {
     id: 'leak-2',
     leakTypeId: 'failed-hose-coupling',
     equivalentDiameterMm: 6,
+    diameterProvenance: 'measured',
     linePressureKpaG: 500,
 };
 
@@ -37,6 +41,7 @@ const pinhole: LoggedLeak = {
     id: 'leak-3',
     leakTypeId: 'pinhole-in-hose',
     equivalentDiameterMm: 1,
+    diameterProvenance: 'catalogue',
     linePressureKpaG: 500,
 };
 
@@ -44,6 +49,7 @@ const refugeBay: LoggedLeak = {
     id: 'open-1',
     leakTypeId: 'refuge-bay-self-ventilation',
     equivalentDiameterMm: 25, // a real bore, not an orifice equivalent
+    diameterProvenance: 'measured', // open lines have no catalogue default to fall back to
     linePressureKpaG: 500,
 };
 
@@ -131,6 +137,16 @@ describe('summariseLeaks', () => {
             (row) => row.leakTypeId === 'refuge-bay-self-ventilation',
         );
         expect(openLine?.category).toBe('deliberate-open-line');
+    });
+
+    it("passes a record's diameter provenance through to the evaluated result, for a catalogue default and a measured override alike", () => {
+        const summary = summariseLeaks([smallCoupling, bigCoupling], withTariff);
+
+        const small = summary.leaks.find((row) => row.id === 'leak-1');
+        const big = summary.leaks.find((row) => row.id === 'leak-2');
+
+        expect(small?.result.diameterProvenance).toBe('catalogue');
+        expect(big?.result.diameterProvenance).toBe('measured');
     });
 
     it('returns an empty, well-formed summary for no records at all', () => {

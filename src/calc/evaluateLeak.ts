@@ -21,6 +21,13 @@
  * real, measured nominal bore rather than an inferred equivalent diameter —
  * see `openLine.ts`, which runs a separate calculation that never treats a
  * bore as this file's `nominalDiameterMm`.
+ *
+ * `equivalentDiameterMm` names two different shapes across the module
+ * boundary and this file is where that collision is resolved: on `LeakInput`
+ * it is a scalar override (a measured figure the caller supplies in place of
+ * the catalogue default), and on `LeakResult` it is the `Range` the override
+ * or default produces after banding. The local `nominalDiameterMm` below is
+ * the scalar, one step before it becomes the output field of the same name.
  */
 
 import { KELVIN_AT_ZERO_CELSIUS, PA_PER_KPA } from './constants.ts';
@@ -45,6 +52,12 @@ export function evaluateLeak(
     const airTemperatureC = input.airTemperatureC ?? settings.airTemperatureC;
     const nominalDiameterMm =
         input.equivalentDiameterMm ?? leakType.equivalentDiameterMm;
+    // Same `??` reasoning as above: an explicit override is what makes this
+    // "measured", regardless of the leak type's own catalogue default.
+    const diameterProvenance: 'measured' | 'catalogue' =
+        input.equivalentDiameterMm !== undefined && input.equivalentDiameterMm !== null
+            ? 'measured'
+            : 'catalogue';
 
     const upstreamAbsolutePressurePa =
         linePressureKpaG * PA_PER_KPA + settings.atmosphericPressurePa;
@@ -68,6 +81,7 @@ export function evaluateLeak(
             leakTypeId: leakType.id,
             category: leakType.category,
             equivalentDiameterMm: null,
+            diameterProvenance: null,
             massFlowKgPerS: null,
             freeAirDeliveryLPerS: null,
             choked,
@@ -110,6 +124,7 @@ export function evaluateLeak(
         leakTypeId: leakType.id,
         category: leakType.category,
         equivalentDiameterMm,
+        diameterProvenance,
         massFlowKgPerS,
         freeAirDeliveryLPerS,
         choked,

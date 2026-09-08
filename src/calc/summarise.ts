@@ -30,6 +30,14 @@ export interface LoggedLeak {
      * module doc above.
      */
     equivalentDiameterMm: number;
+    /**
+     * Whether `equivalentDiameterMm` was typed in at capture time or is the
+     * leak type's catalogue default — set by `buildLeakRecord.ts` when the
+     * record was made, not inferred here. See `evaluateRecord` below for why
+     * it changes what gets passed to `evaluateLeak`, and `types.ts`'s
+     * `LeakResult.diameterProvenance` for how it reaches the register.
+     */
+    diameterProvenance: 'measured' | 'catalogue';
     linePressureKpaG: number;
 }
 
@@ -107,7 +115,16 @@ function evaluateRecord(record: LoggedLeak, settings: CalcSettings): SummarisedL
             ? evaluateLeak(
                   {
                       leakTypeId: record.leakTypeId,
-                      equivalentDiameterMm: record.equivalentDiameterMm,
+                      // Passed as an override only when the record really was
+                      // one — `evaluateLeak` infers `diameterProvenance` from
+                      // whether this argument is present, so a 'catalogue'
+                      // record must reach it as `undefined`, not as the
+                      // resolved value, even though the resolved value and
+                      // the catalogue default are numerically identical.
+                      equivalentDiameterMm:
+                          record.diameterProvenance === 'measured'
+                              ? record.equivalentDiameterMm
+                              : undefined,
                       linePressureKpaG: record.linePressureKpaG,
                   },
                   settings,

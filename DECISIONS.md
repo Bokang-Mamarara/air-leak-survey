@@ -557,3 +557,76 @@ line in it is either a constant/type re-export or a bare `export { x } from
 at ("see DECISIONS.md, Phase 5, for why that matters") — that reference was
 written before this entry existed, during the session the machine restart
 interrupted; it is resolved now, not a new decision.
+
+**2026-09-08 — A leak's diameter-band basis follows the provenance of the
+input, the same principle already applied to open lines** — the 2026-09-08
+entry above on open-line costing established that what a band is honestly
+labelled as depends on where the number came from, not just on which
+category the record is. That principle turned out to apply inside the leak
+path too, not only between leaks and open lines: `evaluateLeak` runs the
+identical ±30% band (`diameterUncertaintyFraction`) whether
+`equivalentDiameterMm` is a measured override (a caliper or ultrasonic
+figure) or the catalogue's inferred default, because "it sounded like a
+coupling" and "I measured 4.5 mm" are different claims about where the
+number came from even when the tool treats them with the same width of
+uncertainty. The CSV's "Band basis" column had been writing
+`equivalent-diameter ±30%` for every leak row regardless, which is a false
+statement about provenance for a measured row. `LeakResult` now carries
+`diameterProvenance: 'measured' | 'catalogue' | null` (`types.ts`), set by
+`evaluateLeak` from whether `LeakInput.equivalentDiameterMm` was supplied —
+the same `??` presence check the nominal value itself already used, so there
+is no second rule to keep in sync with the first. Null is reserved for when
+there is no band to explain at all (an open line, whose band comes from the
+discharge coefficient instead — see the earlier entry — or a leak whose
+diameter is still unresolved). The band **width** does not change with
+provenance: a measurement carries its own real error, and narrowing the
+band for it without an actual measurement-error figure to justify a
+narrower number would be fabricating precision, the same failure mode as a
+guessed tariff. Only the label changes: "catalogue equivalent diameter
+±30%" versus "measured diameter, ±30% assumed", both shown in the CSV
+column and as the register's diameter-cell tooltip (`bandBasis` in
+`csv.ts`, exported so the two cannot drift apart on wording).
+
+Getting this right end to end needed one more piece, past what looked at
+first like a calc-layer-only change: `evaluateLeak` can only infer
+provenance correctly when an absent override actually reaches it as
+`undefined`, and the stored `LeakRecord` did not carry enough information
+to produce that. `buildLeakRecord.ts` had always collapsed
+`diameterOverrideMm ?? leakType.equivalentDiameterMm` into one resolved
+number, with no memory of which side of the `??` supplied it — so
+`summarise.ts`, reading a `LeakRecord` back out, could not tell "the user
+typed 3mm, which is also the catalogue default" from "no override was
+given, so this is the catalogue default." A same-value comparison against
+the catalogue default was considered and rejected: it would mislabel
+exactly that case, a measured figure that happens to coincide with the
+catalogue number, as inferred — silently discarding a real measurement's
+provenance. So `LeakRecord` gained its own `diameterProvenance: 'measured' |
+'catalogue'` field (`src/data/db.ts`), computed once in `buildLeakRecord.ts`
+at the moment the override is either given or not — the only point this
+fact is actually known — using the identical presence check `evaluateLeak`
+uses, so the two cannot disagree about what "measured" means. No Dexie
+version bump: the field is not indexed, so existing stored objects simply
+read back without it, and `RegisterScreen.tsx` falls back to `'catalogue'`
+for that case (unknown defaults to the unremarkable label, never the more
+specific claim). `summarise.ts`'s `evaluateRecord` then only forwards
+`record.equivalentDiameterMm` to `evaluateLeak` as an override when
+`record.diameterProvenance === 'measured'`; when it is `'catalogue'` the
+field is omitted so `evaluateLeak` falls back to the leak type's own
+default and infers `'catalogue'` correctly on its own, rather than being
+told twice. A deliberate open line's bore is always `'measured'` — spec
+section 4's two open-line catalogue entries have no diameter default, so
+the capture flow's required, non-collapsed bore step (2026-09-08, "Open-line
+diameter is a required inline field") always supplies one.
+
+**Known limitation, for the README** (`compressed-air-leak-survey-tool-spec.md`
+section 11 / `PLAN.md` Phase 7's "known limitations" section — no README
+exists yet, this is written here so it can be lifted directly when Phase 7
+starts): a measured diameter still carries the catalogue's ±30% band, because
+the tool has no measurement-error figure of its own to band it by instead.
+The wording distinguishes where the number came from ("measured" versus
+"catalogue"), but not yet how much more confidence a measurement deserves
+— today it gets none. A real deployment carrying ultrasonic-detector data
+with a known instrument error should narrow `diameterUncertaintyFraction`
+for measured readings specifically, which the settings screen does not yet
+support (it has one fraction, applied uniformly); that is future work, not
+something this phase invents a number for now.

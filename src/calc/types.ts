@@ -149,6 +149,23 @@ export interface LeakResult {
     leakTypeId: string;
     category: LeakCategory;
     equivalentDiameterMm: Range | null;
+    /**
+     * Where the nominal value behind `equivalentDiameterMm` came from —
+     * `'measured'` for a caliper or ultrasonic-detector figure supplied as an
+     * override, `'catalogue'` for the leak type's inferred default. Null when
+     * there is no band to explain: an open line's bore is a point value
+     * costed through a banded discharge coefficient instead of a banded
+     * diameter (see `openLine.ts`), or a leak whose diameter is still
+     * unresolved.
+     *
+     * The band width does not change with provenance — `evaluateLeak` bands
+     * a measured diameter at the same `diameterUncertaintyFraction` as a
+     * catalogue one, because there is no measurement-error figure to justify
+     * a narrower band, and inventing one would be fabricating precision the
+     * same way a guessed tariff would be. Only what the band is honestly
+     * labelled as changes.
+     */
+    diameterProvenance: 'measured' | 'catalogue' | null;
     massFlowKgPerS: Range | null;
     freeAirDeliveryLPerS: Range | null;
     /** False only if someone supplies a line pressure below the critical ratio. */

@@ -9,6 +9,7 @@ const record: LeakRecord = {
   y: 200,
   leakTypeId: 'failed-hose-coupling',
   equivalentDiameterMm: 3,
+  diameterProvenance: 'catalogue',
   linePressureKpaG: 500,
   isDeliberateOpenLine: false,
   loggedAt: '2026-09-08T12:00:00.000Z',

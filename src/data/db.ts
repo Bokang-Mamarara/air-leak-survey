@@ -30,6 +30,17 @@ export interface LeakRecord {
    * rank a ventilation shortfall as if it were leak flow.
    */
   equivalentDiameterMm: number
+  /**
+   * Whether `equivalentDiameterMm` came from a typed override or the leak
+   * type's catalogue default — recorded here, at capture time, because it is
+   * a fact about how the record was made and cannot be reconstructed
+   * reliably afterwards (an override that happens to equal the catalogue
+   * value would be indistinguishable from the default if this weren't
+   * stored). Always `'measured'` for a deliberate open line: its bore has no
+   * catalogue default to fall back to, so the capture flow requires it be
+   * typed in every time. See `buildLeakRecord.ts`.
+   */
+  diameterProvenance: 'measured' | 'catalogue'
   linePressureKpaG: number
   /** True for the two spec-section-4 open-line types — a separate category, never totalled with leaks. */
   isDeliberateOpenLine: boolean

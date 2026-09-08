@@ -80,6 +80,12 @@ export function evaluateOpenLine(
             leakTypeId: leakType.id,
             category: leakType.category,
             equivalentDiameterMm: boreBand,
+            // Not `'measured'`: that provenance value describes a leak's
+            // diameter-band basis specifically (see types.ts). An open line's
+            // band comes from the discharge coefficient, not the diameter —
+            // its bore being measured is stated by `boreBand` having no
+            // spread, not by this field.
+            diameterProvenance: null,
             massFlowKgPerS: null,
             freeAirDeliveryLPerS: null,
             choked,
@@ -118,6 +124,7 @@ export function evaluateOpenLine(
         leakTypeId: leakType.id,
         category: leakType.category,
         equivalentDiameterMm: boreBand,
+        diameterProvenance: null,
         massFlowKgPerS,
         freeAirDeliveryLPerS,
         choked,

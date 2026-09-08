@@ -262,6 +262,38 @@ describe('overrides', () => {
         expect(result.equivalentDiameterMm?.high).toBeCloseTo(5.85, 10);
     });
 
+    it('reports the diameter provenance as measured on an override and catalogue on the default', () => {
+        const overridden = evaluateLeak(
+            { ...handCheckLeak, equivalentDiameterMm: 4.5 },
+            DEFAULT_CALC_SETTINGS,
+        );
+        const inferred = evaluateLeak(handCheckLeak, DEFAULT_CALC_SETTINGS);
+
+        expect(overridden.diameterProvenance).toBe('measured');
+        expect(inferred.diameterProvenance).toBe('catalogue');
+    });
+
+    it('an override equal to the catalogue default still reports as measured — same numbers, different basis', () => {
+        // The case a "compare stored value to the catalogue default" shortcut
+        // would get wrong: the override happens to match, but it is still an
+        // override, and the provenance is a fact about how the input arrived,
+        // not about what value it landed on.
+        const overridden = evaluateLeak(
+            { ...handCheckLeak, equivalentDiameterMm: 3 }, // failed-hose-coupling's own catalogue default
+            DEFAULT_CALC_SETTINGS,
+        );
+        const inferred = evaluateLeak(handCheckLeak, DEFAULT_CALC_SETTINGS);
+
+        expect(overridden.diameterProvenance).toBe('measured');
+        expect(inferred.diameterProvenance).toBe('catalogue');
+
+        // Same numbers...
+        expect(overridden.equivalentDiameterMm).toEqual(inferred.equivalentDiameterMm);
+        expect(overridden.annualEnergyKwh).toEqual(inferred.annualEnergyKwh);
+        // ...different basis.
+        expect(overridden.diameterProvenance).not.toBe(inferred.diameterProvenance);
+    });
+
     it('collapses the band when the fraction is set to zero', () => {
         const result = evaluateLeak(handCheckLeak, {
             ...DEFAULT_CALC_SETTINGS,

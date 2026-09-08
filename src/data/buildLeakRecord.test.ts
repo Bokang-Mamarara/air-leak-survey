@@ -34,6 +34,40 @@ describe('buildLeakRecord', () => {
     expect(record.equivalentDiameterMm).toBe(5)
   })
 
+  it('records diameterProvenance as catalogue when no override is given, measured when one is', () => {
+    const catalogueRecord = buildLeakRecord({ ...baseInput, leakType: failedCoupling })
+    expect(catalogueRecord.diameterProvenance).toBe('catalogue')
+
+    const measuredRecord = buildLeakRecord({
+      ...baseInput,
+      leakType: failedCoupling,
+      diameterOverrideMm: 5,
+    })
+    expect(measuredRecord.diameterProvenance).toBe('measured')
+  })
+
+  it('an override equal to the catalogue default is still recorded as measured', () => {
+    // The case a "compare the stored value to the catalogue default"
+    // reconstruction would get wrong: provenance is a fact about how the
+    // record was made, not something derivable from the value alone.
+    const record = buildLeakRecord({
+      ...baseInput,
+      leakType: failedCoupling,
+      diameterOverrideMm: failedCoupling.equivalentDiameterMm as number,
+    })
+    expect(record.equivalentDiameterMm).toBe(failedCoupling.equivalentDiameterMm)
+    expect(record.diameterProvenance).toBe('measured')
+  })
+
+  it('an open line is always recorded as measured — it has no catalogue default to fall back to', () => {
+    const record = buildLeakRecord({
+      ...baseInput,
+      leakType: refugeBay,
+      diameterOverrideMm: 40,
+    })
+    expect(record.diameterProvenance).toBe('measured')
+  })
+
   it('throws rather than inventing a diameter for an open line with no override', () => {
     expect(() => buildLeakRecord({ ...baseInput, leakType: refugeBay })).toThrow()
   })

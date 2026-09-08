@@ -22,7 +22,7 @@ import {
 } from '../calc/index.ts'
 import { db, type LeakRecord, type RepairStatus } from '../data/db.ts'
 import { LEAK_ACCENT_COLOR, OPEN_LINE_ACCENT_COLOR } from '../capture/colors.ts'
-import { buildCsv } from './csv.ts'
+import { bandBasis, buildCsv } from './csv.ts'
 
 const REPAIR_STATUSES: RepairStatus[] = ['open', 'scheduled', 'repaired', 'verified']
 
@@ -177,9 +177,13 @@ function RegisterTable({ rows, records, diameterLabel, onRepairStatusChange }: R
                   {record ? `${Math.round(record.x)}, ${Math.round(record.y)}` : '—'}
                 </td>
                 <td style={tdStyle}>
-                  {row.result.equivalentDiameterMm
-                    ? `${formatRange(row.result.equivalentDiameterMm, 1)} mm`
-                    : '—'}
+                  {row.result.equivalentDiameterMm ? (
+                    <span title={bandBasis(row.result, DEFAULT_CALC_SETTINGS)}>
+                      {formatRange(row.result.equivalentDiameterMm, 1)} mm
+                    </span>
+                  ) : (
+                    '—'
+                  )}
                 </td>
                 <td style={tdStyle}>
                   <PowerCell result={row.result} />
@@ -289,6 +293,10 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
       id: record.id,
       leakTypeId: record.leakTypeId,
       equivalentDiameterMm: record.equivalentDiameterMm,
+      // Falls back to 'catalogue' for a record written before this field
+      // existed — the same "unknown means the safe default, never a
+      // fabricated 'measured'" reasoning as everywhere else null is handled.
+      diameterProvenance: record.diameterProvenance ?? 'catalogue',
       linePressureKpaG: record.linePressureKpaG,
     }))
 
@@ -305,7 +313,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   }
 
   function handleExport() {
-    const csv = buildCsv(summary, recordsById)
+    const csv = buildCsv(summary, recordsById, DEFAULT_CALC_SETTINGS)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
