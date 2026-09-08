@@ -154,12 +154,25 @@ allowed to push the ship date.
       "Self-ventilation / open lines — not a leak", own section, never summed
       into the leak total
 - [x] One Recharts bar chart — loss by leak type (`LossByTypeChart`)
-- [x] CSV export (`src/register/csv.ts`, `buildCsv`, unit tested)
+- [x] CSV export (`src/register/csv.ts`, `buildCsv`, unit tested). Every
+      numeric cell is rounded at export — position to a whole pixel, power to
+      three significant figures, energy/cost to a whole unit, diameter/bore
+      to one decimal — clearing floating-point noise (`4.199999999999999` →
+      `4.2`) and false precision (12-15 digit power/energy figures) an early
+      pass had left in; `src/calc` itself is untouched, rounding stays a
+      display/export concern. Also carries a "Band basis" column, worded from
+      `diameterProvenance` — "catalogue equivalent diameter ±30%" versus
+      "measured diameter, ±30% assumed" — since a measured override and a
+      catalogue default get the same band width but are different claims
+      about where the number came from; `LeakRecord`/`buildLeakRecord.ts`
+      gained the field to make that distinction possible at all (DECISIONS.md,
+      2026-09-08 entries)
 - [ ] CSV opened in Excel — ranges intact, not converted to dates — code
       guards against this (low/expected/high as three separate numeric
       columns, never a hyphenated `"1.5-3.2"` string; see `csv.ts`'s module
-      doc), unit tested, but not yet opened in an actual copy of Excel — that
-      check is the user's to make before the phase closes
+      doc), unit tested including the rounding above, but not yet opened in
+      an actual copy of Excel — that check is the user's to make before the
+      phase closes
 - [x] Realised-saving caveat visible on screen, not in a tooltip —
       `REALISED_SAVING_CAVEAT`, first section under the leak total, before any
       scrolling; rendering not yet eyeballed by the user, who wants to see it
