@@ -388,3 +388,36 @@ pointed at — worse than no tap registering at all. `isWithinPlan(x, y, width,
 height)` (`src/map/coordinates.ts`) is a pure, unit-tested bounds check
 (inclusive of the edges) that the click handler calls before updating state;
 an out-of-bounds tap leaves the marker and readout exactly as they were.
+
+**2026-09-08 — Service worker `registerType: 'prompt'`, not `'autoUpdate'`,
+with a manual reload control** — an autoupdating worker can swap the running
+app out from under the user on a signal flicker mid-shift, which is exactly
+the kind of surprise this project's field constraints exist to prevent.
+`src/sync/UpdatePrompt.tsx` uses `virtual:pwa-register/react`'s
+`useRegisterSW` hook and only ever shows a "Reload" control once a new
+version is actually waiting — nothing reloads without a tap. Same principle
+as the sync queue's manual Retry: no background action the user didn't ask
+for.
+
+**2026-09-08 — `syncQueue.ts`'s network attempt is a pure function; only the
+retry orchestration touches Dexie** — `attemptSync(record, endpoint)` takes
+its endpoint as a parameter (defaulting to the `SYNC_ENDPOINT` constant) and
+returns a status rather than writing anywhere, so it can be unit tested by
+mocking `fetch` alone — no `fake-indexeddb`, which DECISIONS.md already
+ruled out for `buildLeakRecord` on 2026-09-08 as outside the approved stack.
+`retryQueue()` is the one function that reads/writes `db.leakRecords`, and it
+is called only from the badge's Retry button, never from a timer.
+
+**2026-09-08 — PWA icons generated with a hand-written PNG encoder using
+Node's built-in `zlib`, not a new dependency** — the stack has no image
+library, and a one-time asset-export step didn't seem worth adding `sharp`
+or `canvas` for. Triggering downloads from a live page in the browser
+tooling was tried first and abandoned: Chrome silently blocks a second
+script-initiated download from the same page without a fresh user gesture
+per file, which made it unreliable for generating four files in a row. The
+generator script (not committed — one-time use) rasterizes
+`public/icons/icon-source.svg`'s design directly: a filled circle in
+`LEAK_ACCENT_COLOR` on the app's `#0b0f14` background, the same shape and
+colour `MapScreen`'s `CircleMarker` already uses for a leak — so the icon is
+what a leak looks like on the plan, not a new mark invented for the app
+shell.

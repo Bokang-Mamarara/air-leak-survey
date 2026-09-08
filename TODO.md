@@ -83,12 +83,25 @@ allowed to push the ship date.
 
 ## Day 4 — Offline
 
-- [ ] `vite-plugin-pwa` configured, app shell and plan images precached
-- [ ] Manifest, icons, standalone display, dark theme colour
-- [ ] Sync queue badge with pending count, always visible
-- [ ] Stub sync function — never blocks a render, fails quietly to the queue
-- [ ] `npm run build && npm run preview` — service worker shows "activated and running"
-- [ ] DevTools Network → Offline, hard reload, app cold starts
+- [x] `vite-plugin-pwa` configured (`generateSW`, `registerType: 'prompt'`),
+      app shell, `plans/level-24.png`/`.svg`, and Leaflet's bundled CSS
+      precached — 20 entries, 565.66 KiB. `plans/level-24.png` confirmed by
+      name in Cache Storage (`workbox-precache-v2-...`), not just inferred
+      from the app loading offline
+- [x] Manifest, icons, standalone display, dark theme colour — icons
+      generated from `public/icons/icon-source.svg`, no Vite defaults left
+- [x] Sync queue badge with pending count, always visible
+      (`src/sync/SyncQueueBadge.tsx`) — `0 pending` shown even with nothing
+      queued; failed count only rendered when nonzero
+- [x] Stub sync function — never blocks a render, fails quietly to the queue
+      (`src/sync/syncQueue.ts`); manual Retry only, no background loop
+- [x] `npm run build && npm run preview` — service worker registration
+      confirmed `active.state: 'activated'`
+- [ ] DevTools Network → Offline, hard reload, app cold starts — not run;
+      the browser tooling available this session has no network-throttling
+      control. Cache Storage contents were verified directly instead (see
+      above), which is the stronger check for the one asset that matters,
+      but the actual offline-reload gate is still open
 - [ ] Installed to home screen from the Vercel URL on a real phone
 - [ ] **Gate:** airplane mode, cold start from the icon, log a leak
 

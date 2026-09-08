@@ -7,6 +7,8 @@ import { LEVEL_ID } from '../map/planImage.ts'
 import { MapScreen } from '../map/MapScreen.tsx'
 import type { ImageXY } from '../map/coordinates.ts'
 import { LeakTypePicker } from './LeakTypePicker.tsx'
+import { SyncQueueBadge } from '../sync/SyncQueueBadge.tsx'
+import { UpdatePrompt } from '../sync/UpdatePrompt.tsx'
 
 const buttonStyle = {
   minHeight: 48,
@@ -155,6 +157,22 @@ export function CaptureScreen() {
         pendingXY={pendingXY}
         onValidTap={handleValidTap}
       />
+
+      <div
+        style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: 8,
+        }}
+      >
+        <SyncQueueBadge />
+        <UpdatePrompt />
+      </div>
 
       {pendingXY && (
         <div

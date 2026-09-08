@@ -1,0 +1,16 @@
+<!--
+  Source for public/icons/*.png. The mark is deliberately just the same
+  filled circle MapScreen's CircleMarker uses for a leak
+  (LEAK_ACCENT_COLOR on the app's #0b0f14 background, src/capture/colors.ts)
+  — the icon is what a leak looks like on the plan, not a separate mark
+  invented for this purpose.
+
+  The PNGs (192, 512, 512 maskable, apple-touch 180) are generated from this
+  design by a one-time script using Node's built-in zlib, not from this SVG
+  file directly, so any redraw here should be carried over there too if the
+  mark changes.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="92" fill="#0b0f14" />
+  <circle cx="256" cy="256" r="159" fill="#e2574c" stroke="#0b0f14" stroke-width="10" />
+</svg>
