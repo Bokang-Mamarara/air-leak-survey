@@ -1,7 +1,7 @@
-import { MapScreen } from './map/MapScreen'
+import { CaptureScreen } from './capture/CaptureScreen'
 
 function App() {
-  return <MapScreen />
+  return <CaptureScreen />
 }
 
 export default App

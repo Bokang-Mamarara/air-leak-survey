@@ -60,14 +60,25 @@ allowed to push the ship date.
 
 ## Day 3 — Capture flow
 
-- [ ] Dexie schema matching spec section 7
-- [ ] Leak type icon grid, 48px minimum targets
-- [ ] Open-line / self-ventilation categories in a separate visual group
-- [ ] Save writes record with `crypto.randomUUID()` and `syncStatus: 'pending'`
-- [ ] Three-tap flow working: position → type → save
-- [ ] Collapsed override field for measured diameter or dB
-- [ ] Whole flow tapped with the flat of a thumb — the gloves proxy
-- [ ] **Gate:** reload the browser, the leak is still there
+- [x] Dexie schema matching spec section 7 (`src/data/db.ts`) — indexed on
+      `levelId`, `syncStatus`, `repairStatus`
+- [x] Leak type icon grid, 48px minimum targets (`src/capture/LeakTypePicker.tsx`)
+- [x] Open-line / self-ventilation categories in a separate visual group —
+      distinct border/background and heading, not just a filter
+- [x] Save writes record with `crypto.randomUUID()` and `syncStatus: 'pending'`
+      — construction isolated in `buildLeakRecord()`, unit tested (11 tests)
+- [x] Three-tap flow working: position → type → save, for the six real leak
+      types. The two open-line types need a fourth, required, non-collapsed
+      "bore / nominal pipe size" step, logged in `DECISIONS.md` — the
+      schema's non-nullable diameter and the catalogue's deliberate `null`
+      for open lines cannot both be satisfied by a collapsed optional field
+- [x] Collapsed override field for measured diameter and a note, behind
+      "More detail"
+- [x] Whole flow tapped in Chrome device-emulation at phone size — targets
+      hold up; real-phone/glove check still pending
+- [x] **Gate:** logged a leak and an open line, reloaded the browser in
+      Chrome, both still on the plan, read back from IndexedDB and verified
+      directly against the stored record shape
 - [ ] First demonstrable milestone — show someone
 
 ## Day 4 — Offline

@@ -338,6 +338,45 @@ means the user can't tell if they're tapping on the plan or past it. Fixed
 with a light-linework border rect plus corner ticks, in the same style as the
 drive walls, then re-rasterized.
 
+**2026-09-08 — `loggedBy` is a per-device tag, not a person** — there is no
+login (out of scope, per `CLAUDE.md`), and nothing in the app can know who is
+holding the phone. `LeakRecord.loggedBy` is populated from a UUID generated
+once with `crypto.randomUUID()` and cached in `localStorage`
+(`src/data/deviceId.ts`) — the same client-owned-identity principle as the
+record ids themselves, applied to the "who" field rather than the "which
+record" field. This identifies a device, not a crew member. Mapping devices
+to crews (a phone assigned to a named person or shift) is a real-deployment
+requirement this tool does not attempt — add to the README's "what real mine
+data would be needed to trust the output" section.
+
+**2026-09-08 — Open-line diameter is a required inline field, not a collapsed
+override, breaking strict three-tap for those two catalogue entries only** —
+`LeakRecord.equivalentDiameterMm` is a non-nullable `number` (spec section 7),
+but the two open-line types carry `equivalentDiameterMm: null` in the
+catalogue by deliberate design (see the 2026-09-07 entry above: "the diameter
+is the bore of whatever branch was opened, which only the person on site
+knows"). Making the bore field optional-and-collapsed for these two types
+would force a choice between inventing a nominal bore or writing an invalid
+record; both are worse than asking. So for a leak type with a catalogue
+default, three taps still save a record: position, type, save. For the two
+open-line types, a fourth, required, un-collapsed step appears — "Bore /
+nominal pipe size (mm)" — because it is read off the pipe on sight, not an
+inferred equivalent diameter, hence the different label. `buildLeakRecord`
+(`src/data/buildLeakRecord.ts`) is the backstop: it throws rather than
+building a record with a fabricated diameter, independent of whatever the UI
+enforces.
+
+**2026-09-08 — `buildLeakRecord` is a pure function, unit tested, separate
+from the Dexie write and the React state around it** — it is the one place a
+capture-flow selection turns into stored data, and it is where the category →
+`isDeliberateOpenLine` mapping and the "never invent a diameter" rule are
+enforced. Everything else in Phase 3 (`db.ts`, `LeakTypePicker.tsx`,
+`CaptureScreen.tsx`) is verified manually via `npm run dev` and DevTools →
+Application → IndexedDB, the same way `MapScreen.tsx` was verified in Phase
+2 — automating that would mean adding `fake-indexeddb` and a DOM-testing
+library, neither in the approved stack (`CLAUDE.md`), for coverage this
+function's tests already give the part that actually encodes a domain rule.
+
 **2026-09-08 — Out-of-bounds taps are rejected, not clamped** — also found in
 manual corner testing: `maxBounds` on the Leaflet map stops the user panning
 away from the image, but a click event still fires (and still resolves to a

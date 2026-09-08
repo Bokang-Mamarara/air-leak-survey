@@ -20,6 +20,17 @@ export function leafletPointToImageXY(point: LeafletPoint, imageHeightPx: number
   }
 }
 
+// The inverse of leafletPointToImageXY, for rendering a stored or pending
+// image-coordinate marker back onto the Leaflet map. Same flip, run backward:
+// x maps straight across to lng, and y is subtracted from the image height to
+// give a lat that increases upward from the bottom edge.
+export function imageXYToLeafletPoint(point: ImageXY, imageHeightPx: number): LeafletPoint {
+  return {
+    lat: imageHeightPx - point.y,
+    lng: point.x,
+  }
+}
+
 // maxBounds on the Leaflet map constrains panning, not individual click
 // events — a click can still land outside the image (e.g. in the letterboxed
 // margin around it) and needs to be rejected explicitly. Edges are inclusive:

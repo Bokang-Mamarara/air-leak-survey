@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isWithinPlan, leafletPointToImageXY } from './coordinates'
+import { imageXYToLeafletPoint, isWithinPlan, leafletPointToImageXY } from './coordinates'
 
 // Bounds used by MapScreen: southWest [0, 0], northEast [height, width].
 // Leaflet lat increases upward; image y increases downward from the top.
@@ -38,6 +38,29 @@ describe('leafletPointToImageXY', () => {
     expect(leafletPointToImageXY({ lat: 300, lng: 860 }, imageHeightPx)).toEqual({
       x: 860,
       y: 900,
+    })
+  })
+})
+
+describe('imageXYToLeafletPoint', () => {
+  it('is the inverse of leafletPointToImageXY at the four corners and a mid point', () => {
+    const points = [
+      { lat: imageHeightPx, lng: 0 },
+      { lat: 0, lng: 0 },
+      { lat: imageHeightPx, lng: 2000 },
+      { lat: 0, lng: 2000 },
+      { lat: 300, lng: 860 },
+    ]
+    for (const point of points) {
+      const xy = leafletPointToImageXY(point, imageHeightPx)
+      expect(imageXYToLeafletPoint(xy, imageHeightPx)).toEqual(point)
+    }
+  })
+
+  it('maps image origin (0, 0) to the top-left Leaflet corner', () => {
+    expect(imageXYToLeafletPoint({ x: 0, y: 0 }, imageHeightPx)).toEqual({
+      lat: imageHeightPx,
+      lng: 0,
     })
   })
 })
