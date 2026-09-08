@@ -290,3 +290,62 @@ reporting two cost bands, one per method, would double every row of the
 register and force the reader to pick. The two power figures stay visible side
 by side with their bases; the money follows whichever is marked preferred, which
 is the site figure whenever one exists.
+
+**2026-09-08 — `level-24.svg` is committed alongside `level-24.png`, and the
+PNG is rasterized with `npx sharp-cli` rather than a new dependency** — Vercel
+only runs `vite build`, so nothing on the deploy regenerates a PNG from an SVG
+source; if only the `.svg` were committed, the `imageOverlay` would 404 in
+production. `sharp-cli` is invoked once via `npx` to produce the PNG and is
+not added to `package.json` — it never runs again after the file exists, so it
+is a one-time authoring step, not a build-time or runtime dependency, and does
+not count against the approved stack in `CLAUDE.md`.
+
+**2026-09-08 — The Leaflet→image coordinate flip is one pure function,
+`leafletPointToImageXY`, not inlined in `MapScreen`** — `CRS.Simple` keeps
+Leaflet's convention of lat increasing upward from the bounds' southwest
+corner, but a level plan is read with y increasing downward from the top-left.
+Getting this backwards silently produces a mirrored plan that still "looks"
+plausible on screen, which is exactly the kind of bug that survives a casual
+look and only shows up against a real coordinate. Isolating it as a tested
+pure function (`src/map/coordinates.ts`) makes the flip an explicit, checked
+claim instead of an arithmetic aside inside a component.
+
+**2026-09-08 — Marker is a `CircleMarker`, not the default Leaflet `Marker`
+icon** — the default marker icon's image assets don't resolve correctly
+through Vite's bundler without extra configuration, and a broken icon (a grey
+box) is a bad first impression on the one screen a reviewer sees first. A
+`CircleMarker` needs no external image, is trivially styled for dark-background
+contrast (amber fill, dark stroke), and Phase 3 replaces it with the real leak
+marker anyway.
+
+**2026-09-08 — `MapContainer` uses `bounds` (fit-to-bounds) instead of a fixed
+center/zoom, with `minZoom={-2}` and `maxBounds` pinned to the image** — a
+hardcoded zoom is only correct for one viewport size; on a 2000×1200 image a
+zoom of 0 overflows almost any phone screen and looks like a failed load. Fit-
+to-bounds computes the right initial zoom for whatever viewport opens the app.
+`maxBounds` (with `maxBoundsViscosity={1}`) stops the user panning into empty
+space beyond the plan, and `minZoom={-2}` caps how far out they can go past
+that. `doubleClickZoom` is also disabled — two quick taps to reposition a
+marker (the intended Phase 2/3 interaction) must not be read as a zoom
+gesture.
+
+**2026-09-08 — `level-24.svg` gets an explicit border frame and corner ticks**
+— found in manual corner testing: the SVG background (`#0b0f14`) and the page
+background around the map are close enough in value that the plan's extent
+was invisible — there was no way to tell where the image ended and empty
+space began. Underground, with a cap lamp and a phone screen, that ambiguity
+means the user can't tell if they're tapping on the plan or past it. Fixed
+with a light-linework border rect plus corner ticks, in the same style as the
+drive walls, then re-rasterized.
+
+**2026-09-08 — Out-of-bounds taps are rejected, not clamped** — also found in
+manual corner testing: `maxBounds` on the Leaflet map stops the user panning
+away from the image, but a click event still fires (and still resolves to a
+coordinate) when it lands in the letterboxed margin around the image at
+non-fitting zoom levels, producing values like `x: 2190` on a 2000px-wide
+plan. The tempting fix is to clamp the coordinate to the nearest edge, but a
+clamped tap would silently record a leak position the user never actually
+pointed at — worse than no tap registering at all. `isWithinPlan(x, y, width,
+height)` (`src/map/coordinates.ts`) is a pure, unit-tested bounds check
+(inclusive of the edges) that the click handler calls before updating state;
+an out-of-bounds tap leaves the marker and readout exactly as they were.

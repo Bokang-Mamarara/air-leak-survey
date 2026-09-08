@@ -1,5 +1,7 @@
+import { MapScreen } from './map/MapScreen'
+
 function App() {
-  return <div id="app" />
+  return <MapScreen />
 }
 
 export default App

@@ -46,11 +46,17 @@ allowed to push the ship date.
 
 ## Day 2 — Level plan map
 
-- [ ] Placeholder level plan PNG with known pixel dimensions
-- [ ] Leaflet `CRS.Simple` + `imageOverlay`, bounds from image size
-- [ ] Tap to place marker, image coordinates captured
-- [ ] Dark high-contrast styling, no basemap tiles
-- [ ] **Gate:** coordinates are image x/y, never lat/lng
+- [x] Placeholder level plan SVG drawn (`public/plans/level-24.svg`) and
+      rasterized to PNG with known pixel dimensions (`level-24.png`, 2000×1200,
+      constants in `src/map/planImage.ts`)
+- [x] Leaflet `CRS.Simple` + `imageOverlay`, bounds from image size
+- [x] Tap to place marker, image coordinates captured (`leafletPointToImageXY`,
+      unit tested)
+- [x] Dark high-contrast styling, no basemap tiles
+- [x] `App.tsx` renders `MapScreen` directly — no menu, login, or route
+- [x] **Gate:** coordinates are image x/y, never lat/lng — verified in browser
+      (Vite preview): tap places/moves a single marker, readout panel shows
+      the image x/y, double-click does not zoom
 
 ## Day 3 — Capture flow
 
