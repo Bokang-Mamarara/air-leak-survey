@@ -421,3 +421,45 @@ generator script (not committed — one-time use) rasterizes
 colour `MapScreen`'s `CircleMarker` already uses for a leak — so the icon is
 what a leak looks like on the plan, not a new mark invented for the app
 shell.
+
+**2026-09-08 — Real-device testing (Android, landscape) found two Phase 2
+regressions that Chrome device emulation had not caught, both fixed the same
+day** — Leaflet's default zoom control renders at roughly 30px, under the
+48px field constraint, and defaults to the top-left corner, the same corner
+the x/y readout chip already used; the two stacked and covered each other.
+`src/map/ZoomControl.tsx` replaces it: 48px buttons, bottom-right, the one
+corner none of the app's other overlays (readout chip top-left; sync/update
+badges top-right) occupy. Separately, the initial fit had large dead margins
+and illegible pipe-section labels — caused by Leaflet's default `zoomSnap`
+of 1, which rounds the `fitBounds` zoom down to the nearest whole level and
+can leave up to a full zoom level of unnecessary margin. Setting `zoomSnap`
+to `0` on `MapContainer` (`src/map/MapScreen.tsx`) lets the fit land on the
+exact zoom the viewport allows. Confirmed with a throwaway local viewport
+harness (not committed) that renders the built app inside an iframe at an
+exact pixel size, since neither the browser tooling used this session nor
+`Chrome > Responsive` reliably reproduce a real device's CSS viewport: at
+915×412 (phone landscape) the plan now fills the full viewport height with
+zero margin beyond what its own 5:3 aspect ratio forces against a ~2.2:1
+screen (114px each side — the mathematical minimum for that combination,
+not a defect).
+
+**2026-09-08 — Portrait is functional but shows large empty margins above
+and below the plan, and that is not something further fitting code can
+fix** — checked at 412×915. The level plan is drawn landscape (2000×1200);
+a portrait phone screen is much taller and narrower than that shape, so a
+tight fit is necessarily width-bound, leaving most of the screen empty top
+and bottom. Controls don't overlap and the plan itself is fully legible at
+that size, so the screen is usable — but a real user logging leaks is
+better served holding the phone in landscape, matching the plan's own
+orientation. Not treated as a bug to fix in code; if it matters later, the
+lever is redrawing the plan image closer to a phone's native aspect ratio,
+not the map-fitting logic.
+
+**2026-09-08 — Test records cleared from the field-test device by hand;
+"clear all records" logged as a Day 6 settings item, not built now** — 21
+records from real-device Phase 4 testing were removed via the device's
+browser site-storage settings (Claude has no access to a physical Android
+device to do this remotely). The same reset will be needed repeatedly
+between now and ship for demo purposes, so a destructive, confirm-first
+"clear all records" control belongs on the Phase 6 settings screen —
+recorded in TODO.md rather than built out of phase.

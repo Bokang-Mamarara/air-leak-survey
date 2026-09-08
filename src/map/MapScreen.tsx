@@ -5,6 +5,7 @@ import { CircleMarker, ImageOverlay, MapContainer, useMapEvents } from 'react-le
 import { PLAN_IMAGE_HEIGHT_PX, PLAN_IMAGE_URL, PLAN_IMAGE_WIDTH_PX } from './planImage'
 import { imageXYToLeafletPoint, isWithinPlan, leafletPointToImageXY, type ImageXY } from './coordinates'
 import { LEAK_ACCENT_COLOR, OPEN_LINE_ACCENT_COLOR, PENDING_MARKER_COLOR } from '../capture/colors'
+import { ZoomControl } from './ZoomControl'
 
 export interface MapMarker {
   id: string
@@ -48,12 +49,22 @@ export function MapScreen({ markers, pendingXY, onValidTap }: MapScreenProps) {
         maxBounds={bounds}
         maxBoundsViscosity={1}
         minZoom={-2}
+        // Leaflet's default zoomSnap (1) rounds the fitBounds zoom down to
+        // the nearest whole level, which can leave up to a full zoom level
+        // of dead margin around the plan and shrink the PS-xx labels well
+        // below what the fit could otherwise give. 0 lets fitBounds land on
+        // the exact zoom the viewport allows; zoomDelta keeps the (now
+        // custom) +/- buttons stepping by a full level.
+        zoomSnap={0}
+        zoomDelta={1}
+        zoomControl={false}
         doubleClickZoom={false}
         attributionControl={false}
         style={{ height: '100%', width: '100%', background: '#0b0f14' }}
       >
         <ImageOverlay url={PLAN_IMAGE_URL} bounds={bounds} />
         <TapHandler onTap={onValidTap} />
+        <ZoomControl />
 
         {markers.map((marker) => (
           <CircleMarker

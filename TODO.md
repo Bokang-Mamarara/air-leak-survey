@@ -102,8 +102,28 @@ allowed to push the ship date.
       control. Cache Storage contents were verified directly instead (see
       above), which is the stronger check for the one asset that matters,
       but the actual offline-reload gate is still open
-- [ ] Installed to home screen from the Vercel URL on a real phone
-- [ ] **Gate:** airplane mode, cold start from the icon, log a leak
+- [x] Installed to home screen from the Vercel URL on a real phone
+- [x] Real-device findings (Android, landscape) — Leaflet's default zoom
+      control (~30px) was below the 48px field constraint and sat under the
+      x/y readout chip in the same corner. Replaced with
+      `src/map/ZoomControl.tsx`, 48px buttons, moved to bottom-right — the
+      one corner none of the other overlays use
+- [x] Real-device findings — initial fit had large dead margins and
+      illegible PS-xx labels. Cause: Leaflet's default `zoomSnap` (1) rounds
+      the fitBounds zoom down to the nearest whole level, which can leave up
+      to a full zoom level of unnecessary margin. `zoomSnap={0}` on
+      `MapContainer` fixes it — confirmed via a local viewport harness at an
+      exact 915×412 (phone landscape) size that the plan now fills the full
+      viewport height with zero margin beyond what the image's own 5:3
+      aspect ratio forces (114px each side, the mathematical minimum for
+      that aspect combination)
+- [x] Portrait checked (412×915 harness) — functional, no control overlaps,
+      48px zoom buttons reachable bottom-right, but a landscape-shaped plan
+      in a portrait frame is width-bound: most of the screen above and
+      below the plan is unavoidably empty. That's inherent to the plan's
+      aspect ratio, not a bug; see DECISIONS.md
+- [ ] **Gate:** airplane mode, cold start from the icon, log a leak — needs
+      re-running once the fixes above are on Vercel
 
 ## Day 5 — Surface screen
 
@@ -119,6 +139,10 @@ allowed to push the ship date.
 
 ## Day 6 — Settings
 
+- [ ] "Clear all records" control — wipes `db.leakRecords` for the device.
+      Needed repeatedly through the rest of this week to reset test data
+      before a demo (see DECISIONS.md, 2026-09-08); a confirmation step
+      first, since it's destructive and there's no undo
 - [ ] Tariff table, blank by default
 - [ ] Compressor specific power, blank by default
 - [ ] Discharge coefficients, line pressure per level, operating hours
