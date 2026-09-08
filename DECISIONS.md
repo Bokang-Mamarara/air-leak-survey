@@ -463,3 +463,42 @@ device to do this remotely). The same reset will be needed repeatedly
 between now and ship for demo purposes, so a destructive, confirm-first
 "clear all records" control belongs on the Phase 6 settings screen —
 recorded in TODO.md rather than built out of phase.
+
+**2026-09-08 — Portrait horizontal clipping fixed properly, not by going
+landscape-only, and it took two tries** — real-device testing found the
+plan overflowing horizontally in portrait, clipping both edges (SP-14 and
+the DRIVE A label on the left, the legend on the right), so PS-01/PS-08
+needed panning to reach. Root cause: the `minZoom={-2}` added earlier the
+same day for the zoomSnap fix was tighter than the zoom a narrow portrait
+viewport needs to fit a landscape-shaped plan by width — `fitBounds`
+clamped to -2, which is more zoomed in than the fit calls for, so the image
+overflowed both edges instead of letterboxing top and bottom. (The iframe
+viewport harness had reported portrait as "fine" — it measured the iframe's
+own edges, not the image's content against them, so a clipped
+edge-to-edge image looked identical to a correctly-fit one in that check.
+Noted so the same blind spot doesn't recur: verify against the source
+image's actual content, not just against the container edges.)
+
+The fix went through two wrong turns before landing:
+
+1. First attempt: read `map.getZoom()` in a mounted child component and call
+   `map.setMinZoom()` with it, to make the floor track whatever zoom the
+   fit actually used instead of a constant. This raced MapContainer's own
+   `bounds`-triggered fit — whichever ran first — and losing that race
+   meant capturing the pre-fit default zoom (0) and locking minZoom there,
+   which clamped the real fit to full native resolution, mostly off-screen.
+2. Second attempt: replaced `getZoom()` with `getBoundsZoom(bounds)`,
+   assuming it computed the ideal fit zoom independent of the map's current
+   state. It doesn't: Leaflet's `getBoundsZoom` (and `fitBounds`) both clamp
+   their own result to the map's *current* `minZoom` — and with the fixed
+   `minZoom={-2}` removed and nothing set yet, Leaflet's default (0) clamped
+   every computed fit to zero before the new component could act on it.
+
+The working fix (`src/map/MapScreen.tsx`) sets a generous static
+`minZoom={-10}` directly on `MapContainer` — low enough that it never binds
+for this image on any realistic viewport, so it doesn't interfere with
+Leaflet's own internal clamping — and a `FitZoomFloor` child component then
+tightens `minZoom` to the real per-viewport value via `getBoundsZoom` once
+mounted, so the user still can't zoom out past "whole plan visible."
+Reconfirmed with the same viewport harness at exact 915×412 and 412×915:
+landscape unchanged, portrait now fits full-width with no clipping.

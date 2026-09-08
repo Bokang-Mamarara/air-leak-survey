@@ -122,6 +122,22 @@ allowed to push the ship date.
       in a portrait frame is width-bound: most of the screen above and
       below the plan is unavoidably empty. That's inherent to the plan's
       aspect ratio, not a bug; see DECISIONS.md
+- [x] Real-device regression (Android, portrait) — the plan overflowed
+      horizontally, clipping both edges (SP-14/DRIVE A on the left, the
+      legend on the right), so PS-01 and PS-08 needed panning to reach. The
+      iframe viewport harness had reported portrait as fine; it wasn't
+      measuring against the image's own content bounds, so a full-width
+      clipped image looked the same as a full-width correctly-fit one.
+      Cause: `minZoom={-2}` (added for the zoomSnap fix above) was tighter
+      than the zoom a narrow portrait viewport needs to fit the plan by
+      width, clamping the fit and zooming in past what the viewport could
+      hold. Fixed properly, not with `"orientation": "landscape"` in the
+      manifest — see DECISIONS.md for the two bugs that surfaced getting
+      there and the final approach (`FitZoomFloor` + a generous static
+      `minZoom={-10}` floor). Reconfirmed with the harness at both
+      exact 915×412 and 412×915: landscape unchanged (114px margins each
+      side, the aspect-ratio minimum), portrait now fits full-width with
+      zero horizontal clipping
 - [ ] **Gate:** airplane mode, cold start from the icon, log a leak — needs
       re-running once the fixes above are on Vercel
 

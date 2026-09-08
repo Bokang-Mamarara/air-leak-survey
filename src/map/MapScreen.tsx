@@ -1,7 +1,7 @@
 import 'leaflet/dist/leaflet.css'
-import { CRS, latLngBounds } from 'leaflet'
-import { useMemo } from 'react'
-import { CircleMarker, ImageOverlay, MapContainer, useMapEvents } from 'react-leaflet'
+import { CRS, latLngBounds, type LatLngBounds } from 'leaflet'
+import { useEffect, useMemo } from 'react'
+import { CircleMarker, ImageOverlay, MapContainer, useMap, useMapEvents } from 'react-leaflet'
 import { PLAN_IMAGE_HEIGHT_PX, PLAN_IMAGE_URL, PLAN_IMAGE_WIDTH_PX } from './planImage'
 import { imageXYToLeafletPoint, isWithinPlan, leafletPointToImageXY, type ImageXY } from './coordinates'
 import { LEAK_ACCENT_COLOR, OPEN_LINE_ACCENT_COLOR, PENDING_MARKER_COLOR } from '../capture/colors'
@@ -18,6 +18,29 @@ interface MapScreenProps {
   markers: MapMarker[]
   pendingXY: ImageXY | null
   onValidTap: (xy: ImageXY) => void
+}
+
+/**
+ * Sets the zoom-out floor to the zoom that fits `bounds` in the current
+ * container — the same computation MapContainer's `bounds` prop uses for
+ * the initial fit — instead of a fixed constant. A fixed minZoom can be
+ * tighter than what a narrow portrait viewport needs to fit the whole plan
+ * by width — on a real device that clamped the fit and clipped both edges
+ * instead of letterboxing top and bottom (see DECISIONS.md, 2026-09-08).
+ *
+ * Leaflet's `getBoundsZoom` (used here) and `fitBounds` (used by
+ * MapContainer's `bounds` prop) both clamp their result to the map's
+ * *current* minZoom internally — which is why MapContainer below still
+ * sets an explicit, very low `minZoom`. Without it, Leaflet's built-in
+ * default (0, since there's no tile layer to imply one) would clamp every
+ * fit to native, unscaled size before this component ever runs.
+ */
+function FitZoomFloor({ bounds }: { bounds: LatLngBounds }) {
+  const map = useMap()
+  useEffect(() => {
+    map.setMinZoom(map.getBoundsZoom(bounds))
+  }, [map, bounds])
+  return null
 }
 
 function TapHandler({ onTap }: { onTap: (xy: ImageXY) => void }) {
@@ -48,7 +71,13 @@ export function MapScreen({ markers, pendingXY, onValidTap }: MapScreenProps) {
         bounds={bounds}
         maxBounds={bounds}
         maxBoundsViscosity={1}
-        minZoom={-2}
+        // A generous static floor, not the real constraint — it exists so
+        // Leaflet's own internal clamping (in fitBounds and
+        // getBoundsZoom, both of which cap their result at the map's
+        // *current* minZoom) never binds before FitZoomFloor tightens
+        // this to the correct per-viewport value below. -10 is far past
+        // anything a 2000x1200 plan on any realistic viewport would need.
+        minZoom={-10}
         // Leaflet's default zoomSnap (1) rounds the fitBounds zoom down to
         // the nearest whole level, which can leave up to a full zoom level
         // of dead margin around the plan and shrink the PS-xx labels well
@@ -65,6 +94,7 @@ export function MapScreen({ markers, pendingXY, onValidTap }: MapScreenProps) {
         <ImageOverlay url={PLAN_IMAGE_URL} bounds={bounds} />
         <TapHandler onTap={onValidTap} />
         <ZoomControl />
+        <FitZoomFloor bounds={bounds} />
 
         {markers.map((marker) => (
           <CircleMarker
