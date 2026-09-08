@@ -13,6 +13,8 @@ import {
     GAS_CONSTANT_AIR_J_PER_KG_K,
     HOURS_PER_YEAR,
     LEAK_TYPE_CATALOGUE,
+    OPEN_LINE_DISCHARGE_COEFFICIENT,
+    OPEN_LINE_DISCHARGE_COEFFICIENT_UNCERTAINTY_FRACTION,
     POLYTROPIC_EXPONENT_COOLED,
     REALISED_SAVING_CAVEAT,
     SPECIFIC_HEAT_RATIO_AIR,
@@ -132,10 +134,9 @@ describe('leak type catalogue', () => {
 
         for (const openLine of openLines) {
             expect(openLine.equivalentDiameterMm).toBeNull();
-            // Fully open line, spec section 3.1.
-            expect(openLine.dischargeCoefficient).toBe(
-                DISCHARGE_COEFFICIENTS.fullyOpen,
-            );
+            // Phase 5 decision: rounded/nozzle-like, not an idealised fully
+            // open bore — see OPEN_LINE_DISCHARGE_COEFFICIENT's source comment.
+            expect(openLine.dischargeCoefficient).toBe(OPEN_LINE_DISCHARGE_COEFFICIENT);
         }
     });
 
@@ -186,6 +187,14 @@ describe('default calculation settings', () => {
         expect(ATMOSPHERIC_PRESSURE_PA).toBe(101325);
         expect(DEFAULT_CALC_SETTINGS.atmosphericPressurePa).toBe(
             ATMOSPHERIC_PRESSURE_PA,
+        );
+    });
+
+    it('bands the open-line discharge coefficient at 0.8 plus or minus 25 percent', () => {
+        expect(OPEN_LINE_DISCHARGE_COEFFICIENT).toBe(DISCHARGE_COEFFICIENTS.rounded);
+        expect(OPEN_LINE_DISCHARGE_COEFFICIENT_UNCERTAINTY_FRACTION).toBe(0.25);
+        expect(DEFAULT_CALC_SETTINGS.openLineDischargeCoefficientUncertaintyFraction).toBe(
+            OPEN_LINE_DISCHARGE_COEFFICIENT_UNCERTAINTY_FRACTION,
         );
     });
 });

@@ -60,7 +60,11 @@ const inputStyle = {
   boxSizing: 'border-box',
 } as const
 
-export function CaptureScreen() {
+interface CaptureScreenProps {
+  onOpenRegister: () => void
+}
+
+export function CaptureScreen({ onOpenRegister }: CaptureScreenProps) {
   const [records, setRecords] = useState<LeakRecord[]>([])
   const [pendingXY, setPendingXY] = useState<ImageXY | null>(null)
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null)
@@ -172,6 +176,19 @@ export function CaptureScreen() {
       >
         <SyncQueueBadge />
         <UpdatePrompt />
+      </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 12,
+          left: 12,
+          zIndex: 1000,
+        }}
+      >
+        <button type="button" style={buttonStyle} onClick={onOpenRegister}>
+          Register
+        </button>
       </div>
 
       {pendingXY && (

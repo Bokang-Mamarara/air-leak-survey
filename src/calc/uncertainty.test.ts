@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { DIAMETER_UNCERTAINTY_FRACTION } from './constants.ts';
-import { diameterBandMm, mapRange } from './uncertainty.ts';
+import { coefficientBand, diameterBandMm, mapRange } from './uncertainty.ts';
 import type { Range } from './types.ts';
 
 describe('diameter band', () => {
@@ -40,6 +40,39 @@ describe('diameter band', () => {
     it('refuses a diameter that is not a positive number', () => {
         expect(() => diameterBandMm(0, 0.3)).toThrow(RangeError);
         expect(() => diameterBandMm(-3, 0.3)).toThrow(RangeError);
+    });
+});
+
+describe('discharge coefficient band', () => {
+    it('puts plus or minus 25 percent around a nominal 0.8, spanning sharp-edged to fully open', () => {
+        const band = coefficientBand(0.8, 0.25);
+
+        expect(band.low).toBeCloseTo(0.6, 10);
+        expect(band.expected).toBe(0.8);
+        expect(band.high).toBeCloseTo(1.0, 10);
+    });
+
+    it('clamps the high end at 1.0, the physical ceiling for a discharge coefficient', () => {
+        const band = coefficientBand(0.9, 0.3);
+
+        // Uncapped this would be 1.17, which is not a physically meaningful
+        // discharge coefficient in this model.
+        expect(band.high).toBe(1);
+    });
+
+    it('collapses to a point when the fraction is zero', () => {
+        expect(coefficientBand(0.8, 0)).toEqual({ low: 0.8, expected: 0.8, high: 0.8 });
+    });
+
+    it('refuses a nominal coefficient outside (0, 1]', () => {
+        expect(() => coefficientBand(0, 0.25)).toThrow(RangeError);
+        expect(() => coefficientBand(-0.5, 0.25)).toThrow(RangeError);
+        expect(() => coefficientBand(1.5, 0.25)).toThrow(RangeError);
+    });
+
+    it('refuses a fraction of one or more, or a negative one', () => {
+        expect(() => coefficientBand(0.8, 1)).toThrow(RangeError);
+        expect(() => coefficientBand(0.8, -0.1)).toThrow(RangeError);
     });
 });
 

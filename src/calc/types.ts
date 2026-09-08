@@ -188,6 +188,13 @@ export interface CalcSettings {
     operatingHoursPerYear: number;
     /** Fractional half-width of the equivalent-diameter band, e.g. 0.3 for +-30%. */
     diameterUncertaintyFraction: number;
+    /**
+     * Fractional half-width of the discharge-coefficient band `evaluateOpenLine`
+     * applies to a deliberate open line. An open line's bore is measured, not
+     * inferred, so it is a point value there; this fraction bands the
+     * coefficient instead. See `coefficientBand` in `uncertainty.ts`.
+     */
+    openLineDischargeCoefficientUncertaintyFraction: number;
     leakTypes: readonly LeakTypeDefinition[];
     compressor: CompressorSpec;
     tariff: TariffSchedule | null;

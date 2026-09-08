@@ -207,6 +207,38 @@ export const TARIFF: TariffSchedule | null = null;
  */
 export const DIAMETER_UNCERTAINTY_FRACTION = 0.3;
 
+/**
+ * Discharge coefficient for a deliberately opened line — spec section 4's
+ * two self-ventilation and cooling categories.
+ *
+ * Phase 1 carried these at `DISCHARGE_COEFFICIENTS.fullyOpen` (1.0), an
+ * idealised fully-open bore. Phase 5 decision: a line opened by removing a
+ * blank, cracking a valve, or cutting a hose end discharges more like a
+ * rounded, nozzle-like opening than either a knife-edged puncture or a
+ * perfectly clean bore, so `rounded` (0.8) — the middle of the three named
+ * coefficients — is the better physical match. See the 2026-09-08 entry in
+ * DECISIONS.md for the full reasoning, including why the bore itself is
+ * still not banded the way a leak's equivalent diameter is.
+ */
+export const OPEN_LINE_DISCHARGE_COEFFICIENT = DISCHARGE_COEFFICIENTS.rounded;
+
+/**
+ * Fractional half-width of the discharge-coefficient band `evaluateOpenLine`
+ * applies to `OPEN_LINE_DISCHARGE_COEFFICIENT`.
+ *
+ * An open line's bore is a real, measured nominal pipe size — not inferred
+ * from a catalogue guess the way a leak's equivalent diameter is — so it is
+ * treated as a point value (`openLine.ts`) rather than banded. What is
+ * genuinely uncertain instead is how the opened end actually discharges: an
+ * unbevelled cut, a missing flange, a valve half off its seat could
+ * plausibly sit anywhere from close to a sharp-edged orifice up to an
+ * idealised fully-open bore. 0.8 x (1 +/- 0.25) spans 0.6 to 1.0, bracketing
+ * `DISCHARGE_COEFFICIENTS.sharpEdged` (0.61) and `.fullyOpen` (1.0) — the
+ * genuine range of how ragged or clean a real opened line end turns out to
+ * be, rather than an invented figure.
+ */
+export const OPEN_LINE_DISCHARGE_COEFFICIENT_UNCERTAINTY_FRACTION = 0.25;
+
 // ---------------------------------------------------------------------------
 // Leak type catalogue — spec section 4
 // ---------------------------------------------------------------------------
@@ -278,21 +310,25 @@ export const LEAK_TYPE_CATALOGUE: readonly LeakTypeDefinition[] = [
         label: 'Refuge bay self-ventilation',
         category: 'deliberate-open-line',
         equivalentDiameterMm: null,
-        dischargeCoefficient: DISCHARGE_COEFFICIENTS.fullyOpen,
+        dischargeCoefficient: OPEN_LINE_DISCHARGE_COEFFICIENT,
         basis:
             'Spec section 4, separate category. Diameter is the bore of the ' +
             'branch that was opened, which only the person on site knows, so ' +
-            'it is asked for rather than assumed.',
+            'it is asked for rather than assumed. Discharge coefficient is ' +
+            'the rounded/nozzle-like value, not an idealised fully-open bore ' +
+            '— see OPEN_LINE_DISCHARGE_COEFFICIENT above.',
     },
     {
         id: 'open-line-for-cooling',
         label: 'Open line for cooling',
         category: 'deliberate-open-line',
         equivalentDiameterMm: null,
-        dischargeCoefficient: DISCHARGE_COEFFICIENTS.fullyOpen,
+        dischargeCoefficient: OPEN_LINE_DISCHARGE_COEFFICIENT,
         basis:
             'Spec section 4, separate category. A ventilation shortfall being ' +
-            'compensated with compressed air. Diameter asked for, not assumed.',
+            'compensated with compressed air. Diameter asked for, not assumed. ' +
+            'Discharge coefficient is the rounded/nozzle-like value — see ' +
+            'OPEN_LINE_DISCHARGE_COEFFICIENT above.',
     },
 ];
 
@@ -310,6 +346,8 @@ export const DEFAULT_CALC_SETTINGS: CalcSettings = {
     airTemperatureC: DEFAULT_AIR_TEMPERATURE_C,
     operatingHoursPerYear: DEFAULT_OPERATING_HOURS_PER_YEAR,
     diameterUncertaintyFraction: DIAMETER_UNCERTAINTY_FRACTION,
+    openLineDischargeCoefficientUncertaintyFraction:
+        OPEN_LINE_DISCHARGE_COEFFICIENT_UNCERTAINTY_FRACTION,
     leakTypes: LEAK_TYPE_CATALOGUE,
     compressor: DEFAULT_COMPRESSOR_SPEC,
     tariff: TARIFF,

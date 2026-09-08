@@ -502,3 +502,58 @@ tightens `minZoom` to the real per-viewport value via `getBoundsZoom` once
 mounted, so the user still can't zoom out past "whole plan visible."
 Reconfirmed with the same viewport harness at exact 915×412 and 412×915:
 landscape unchanged, portrait now fits full-width with no clipping.
+
+**2026-09-08 — An open line is costed through the same choked-orifice
+physics as a leak, but never through `evaluateLeak` itself; the diameter
+is a point value and the discharge coefficient is banded instead** — a
+choked orifice is a choked orifice regardless of why the opening exists, so
+`evaluateOpenLine` (`src/calc/openLine.ts`) reuses `chokedMassFlowKgPerS`
+and `computePowerAndCost` unconditionally; there is no separate physics for
+a deliberate open line. What it does not reuse is `evaluateLeak`'s
+diameter-uncertainty step, and that is the actual guard, not the orifice
+equation. `evaluateLeak`'s diameter band exists because its input is an
+inferred fiction — a person underground picking the closest catalogue
+description of a sound or a plume, with no instrument on it — so the
+diameter itself is the uncertain quantity and gets banded ±30%
+(`diameterUncertaintyFraction`). An open line's bore is read directly off
+the pipe; running it through that same inference model would band a
+measured number as if it, too, were a guess, which manufactures uncertainty
+that isn't there and hides the uncertainty that is: how cleanly an ad hoc
+opening — a cut pipe end, a missing flange, a valve half off its seat —
+actually discharges, versus a manufactured nozzle a discharge coefficient
+was calibrated against. So `evaluateOpenLine` holds the bore as a point
+value (`boreMm`, `low === expected === high`) and bands the discharge
+coefficient instead, via `coefficientBand` and its own settings fraction,
+`openLineDischargeCoefficientUncertaintyFraction` — deliberately a
+separate field from `diameterUncertaintyFraction`, not a reuse of it, so
+that changing one never silently moves the other. Net effect: same
+equation, same shared cost tail, different quantity treated as the unknown.
+
+**2026-09-08 — `src/calc/index.ts` split into leaf modules to keep the
+module graph acyclic once `summarise.ts` needed to call both evaluators**
+— `evaluateLeak`, `evaluateOpenLine` and `summariseLeaks` used to be
+candidates for living directly in `index.ts` (`evaluateLeak` did, before
+today; `evaluateOpenLine` and `summariseLeaks` were deferred there — see the
+2026-09-07 entry above marking `summariseLeaks` as "belongs in `src/calc`,
+not in a component, deferred to Phase 5"). That stopped working the moment
+`summariseLeaks` existed: it has to call both `evaluateLeak` and
+`evaluateOpenLine` to dispatch a record by the catalogue's own category
+(spec's separate-category rule made concrete, not a display choice), and
+`index.ts` re-exports `summariseLeaks` as the module's public surface. If
+either evaluator were defined inside `index.ts`, `summarise.ts` would import
+from `index.ts` to reach it, while `index.ts` imports from `summarise.ts` to
+re-export `summariseLeaks` — a cycle. The fix is the ordinary one: nothing
+in `src/calc` other than `index.ts` may import `index.ts`, so every function
+`index.ts` exports now lives in its own leaf module and is re-exported, never
+defined, there. `evaluateLeak.ts` and `openLine.ts` hold the two evaluators;
+`catalogue.ts` holds `findLeakType`, needed by both without either importing
+the other; `powerAndCost.ts` holds the mass-flow-to-cost tail the two
+evaluators share once a flow band exists (identical physics regardless of
+whether the flow came from a leak's banded diameter or an open line's banded
+discharge coefficient); `summarise.ts` holds the dispatch and totalling.
+`index.ts` itself dropped from 286 lines to 51 and holds no logic — every
+line in it is either a constant/type re-export or a bare `export { x } from
+'./leaf.ts'`. This entry is what `index.ts`'s own module doc comment points
+at ("see DECISIONS.md, Phase 5, for why that matters") — that reference was
+written before this entry existed, during the session the machine restart
+interrupted; it is resolved now, not a new decision.

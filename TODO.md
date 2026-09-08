@@ -143,15 +143,35 @@ allowed to push the ship date.
 
 ## Day 5 — Surface screen
 
-- [ ] Register sorted by expected R/year descending
-- [ ] Every figure displayed as a band, not a point value
-- [ ] System total for leaks
-- [ ] Open-line / self-ventilation totalled separately with its own label
-- [ ] One Recharts bar chart — loss by leak type
-- [ ] CSV export
-- [ ] CSV opened in Excel — ranges intact, not converted to dates
-- [ ] Realised-saving caveat visible on screen, not in a tooltip
-- [ ] Repair status control
+- [x] Register sorted by expected R/year descending — `compareByLossDescending`
+      in `src/calc/summarise.ts`: cost when the tariff makes it known, energy
+      when it doesn't, so an unset tariff doesn't collapse the ranking to
+      input order; a row with neither (an unchoked line) sinks to the bottom
+- [x] Every figure displayed as a band, not a point value (`RegisterScreen.tsx`,
+      `formatRange`/`formatZarRange`)
+- [x] System total for leaks (`summary.leakTotals`)
+- [x] Open-line / self-ventilation totalled separately with its own label —
+      "Self-ventilation / open lines — not a leak", own section, never summed
+      into the leak total
+- [x] One Recharts bar chart — loss by leak type (`LossByTypeChart`)
+- [x] CSV export (`src/register/csv.ts`, `buildCsv`, unit tested)
+- [ ] CSV opened in Excel — ranges intact, not converted to dates — code
+      guards against this (low/expected/high as three separate numeric
+      columns, never a hyphenated `"1.5-3.2"` string; see `csv.ts`'s module
+      doc), unit tested, but not yet opened in an actual copy of Excel — that
+      check is the user's to make before the phase closes
+- [x] Realised-saving caveat visible on screen, not in a tooltip —
+      `REALISED_SAVING_CAVEAT`, first section under the leak total, before any
+      scrolling; rendering not yet eyeballed by the user, who wants to see it
+      before the phase closes
+- [x] Repair status control (`RegisterTable`'s status `<select>`, writes
+      through to `db.leakRecords`)
+
+**Gate:** register ranks correctly (verified — `summarise.test.ts`), caveat is
+visible without scrolling past the totals (verified in code, not yet by eye),
+CSV opens in Excel with the ranges intact (verified by unit test against the
+column shape, not yet by actually opening a file in Excel). The two "not yet"
+items are what the user is checking before Phase 5 closes.
 
 ## Day 6 — Settings
 

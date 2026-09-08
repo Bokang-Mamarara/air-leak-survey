@@ -53,6 +53,44 @@ export function diameterBandMm(nominalMm: number, fraction: number): Range {
 }
 
 /**
+ * A band around a nominal discharge coefficient, used for a deliberate open
+ * line rather than a leak.
+ *
+ * An open line's bore is a real, measured nominal pipe size, not inferred
+ * from a catalogue guess the way a leak's equivalent diameter is — see
+ * `openLine.ts`, where the bore is carried as a point value instead of a
+ * band. What is genuinely uncertain there is how the opened end actually
+ * discharges: an unbevelled cut, a missing flange, a valve half off its seat
+ * all sit somewhere between a sharp-edged orifice and an idealised fully-open
+ * bore. This bands the coefficient instead of the diameter. It is a
+ * differently derived band, not a more confident one.
+ *
+ * Clamped at 1.0, the physical ceiling for this model's discharge
+ * coefficient (`DISCHARGE_COEFFICIENTS.fullyOpen` in `constants.ts`) — a real
+ * opening cannot discharge more freely than an idealised fully-open bore.
+ */
+export function coefficientBand(nominal: number, fraction: number): Range {
+    if (!Number.isFinite(nominal) || nominal <= 0 || nominal > 1) {
+        throw new RangeError(
+            `The nominal discharge coefficient must be greater than 0 and at ` +
+                `most 1; received ${nominal}.`,
+        );
+    }
+    if (!Number.isFinite(fraction) || fraction < 0 || fraction >= 1) {
+        throw new RangeError(
+            `The uncertainty fraction must be at least 0 and less than 1; ` +
+                `received ${fraction}.`,
+        );
+    }
+
+    return {
+        low: nominal * (1 - fraction),
+        expected: nominal,
+        high: Math.min(nominal * (1 + fraction), 1),
+    };
+}
+
+/**
  * Push a band through one step of the calculation.
  *
  * The step must be monotonically increasing — every step in this tool is — and

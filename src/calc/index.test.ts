@@ -187,12 +187,14 @@ describe('deliberate open lines', () => {
         expect(result.annualCostZar).not.toBeNull();
 
         // A 25 mm open line against a 3 mm coupling: 69 times the area, and
-        // Cd 1.0 against 0.61. This is why they are totalled separately.
+        // (Phase 5) Cd 0.8 against 0.61 — about 91 times the cost. This is
+        // why they are totalled separately. (The register itself does not
+        // cost open lines this way; see evaluateOpenLine and DECISIONS.md.)
         const coupling = evaluateLeak(handCheckLeak, withTariff);
         expect(
             (result.annualCostZar as Range).expected /
                 (coupling.annualCostZar as Range).expected,
-        ).toBeGreaterThan(100);
+        ).toBeGreaterThan(80);
     });
 });
 
