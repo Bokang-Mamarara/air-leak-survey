@@ -1,7 +1,8 @@
 /**
  * `summariseLeaks` — turns a set of stored records into the leak register:
  * ranked leaks, a separate ranked list of open lines, two independent
- * totals, and a per-type breakdown for the chart.
+ * totals, and two independent per-type breakdowns — one for each category's
+ * own chart.
  *
  * This is the deferred-from-Phase-1 function `evaluateLeak`'s own docstring
  * pointed at: totalling belongs in the calculation layer because keeping a
@@ -74,6 +75,14 @@ export interface LeakTypeLoss {
  * Two named buckets, no third. There is nowhere to put a figure that sums
  * leaks and open lines together — the same shape of guarantee
  * `LeakResult.power` gives the two compressor methods.
+ *
+ * `byLeakType` and `byOpenLineType` carry the same split: a chart built from
+ * one of them can only ever show one category's bars. A single combined
+ * breakdown would let self-ventilation loss sit on the same axis as leak
+ * loss under the label "leak type" — the domain rule that they are never
+ * merged applies to the chart as much as it does to `leakTotals` /
+ * `openLineTotals` above (see DECISIONS.md, 2026-09-07, "`summariseLeaks()`
+ * belongs in `src/calc`, not in a component").
  */
 export interface LeakSummary {
     leaks: SummarisedLeak[];
@@ -81,6 +90,7 @@ export interface LeakSummary {
     leakTotals: CategoryTotals;
     openLineTotals: CategoryTotals;
     byLeakType: LeakTypeLoss[];
+    byOpenLineType: LeakTypeLoss[];
 }
 
 export function summariseLeaks(
@@ -103,7 +113,8 @@ export function summariseLeaks(
         openLines,
         leakTotals: totalsFor(leaks, tariffIsSet),
         openLineTotals: totalsFor(openLines, tariffIsSet),
-        byLeakType: groupByLeakType(evaluated, tariffIsSet),
+        byLeakType: groupByLeakType(leaks, tariffIsSet),
+        byOpenLineType: groupByLeakType(openLines, tariffIsSet),
     };
 }
 

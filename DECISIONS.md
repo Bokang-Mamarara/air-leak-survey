@@ -630,3 +630,17 @@ with a known instrument error should narrow `diameterUncertaintyFraction`
 for measured readings specifically, which the settings screen does not yet
 support (it has one fraction, applied uniformly); that is future work, not
 something this phase invents a number for now.
+**2026-09-09 — `LeakSummary.byLeakType` split into `byLeakType` and
+`byOpenLineType`** — found while checking the Phase 5 deployment on Vercel
+before sign-off. `summariseLeaks` grouped the unfiltered evaluated-record
+list into one `byLeakType` breakdown, so the register's "Loss by leak type"
+chart plotted the self-ventilation record on the same axis as real leaks,
+color-coded but with no legend — exactly the display-layer merge the
+2026-09-07 entry ("`summariseLeaks()` belongs in `src/calc`, not in a
+component") set out to prevent, just one level up from the totals it was
+written to guard. `leakTotals`/`openLineTotals` and the register table were
+never affected — only the chart's grouping. Fix: `byLeakType` now groups
+`leaks` only, a new `byOpenLineType` groups `openLines`, and
+`RegisterScreen.tsx` renders a second, separate "Loss by open-line type"
+chart inside the existing self-ventilation section rather than folding it
+into the leak chart.

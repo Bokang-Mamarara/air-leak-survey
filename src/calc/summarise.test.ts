@@ -121,22 +121,26 @@ describe('summariseLeaks', () => {
         expect(summary.openLineTotals.costUnavailableReason).toBe('no-tariff-set');
     });
 
-    it('groups loss by leak type across both categories, for the chart', () => {
+    it('groups loss by leak type, leaks only — never an open line, even when both are logged', () => {
         const summary = summariseLeaks([smallCoupling, bigCoupling, pinhole, refugeBay], withTariff);
 
         const types = summary.byLeakType.map((row) => row.leakTypeId).sort();
-        expect(types).toEqual(
-            ['failed-hose-coupling', 'pinhole-in-hose', 'refuge-bay-self-ventilation'].sort(),
-        );
+        expect(types).toEqual(['failed-hose-coupling', 'pinhole-in-hose'].sort());
+        expect(summary.byLeakType.every((row) => row.category === 'leak')).toBe(true);
 
         const coupling = summary.byLeakType.find((row) => row.leakTypeId === 'failed-hose-coupling');
-        expect(coupling?.category).toBe('leak');
         expect(coupling?.count).toBe(2);
+    });
 
-        const openLine = summary.byLeakType.find(
-            (row) => row.leakTypeId === 'refuge-bay-self-ventilation',
+    it('groups loss by open-line type in its own breakdown, kept off the leak chart', () => {
+        const summary = summariseLeaks([smallCoupling, bigCoupling, pinhole, refugeBay], withTariff);
+
+        const types = summary.byOpenLineType.map((row) => row.leakTypeId);
+        expect(types).toEqual(['refuge-bay-self-ventilation']);
+        expect(summary.byOpenLineType[0].category).toBe('deliberate-open-line');
+        expect(summary.byLeakType.map((row) => row.leakTypeId)).not.toContain(
+            'refuge-bay-self-ventilation',
         );
-        expect(openLine?.category).toBe('deliberate-open-line');
     });
 
     it("passes a record's diameter provenance through to the evaluated result, for a catalogue default and a measured override alike", () => {
@@ -155,6 +159,7 @@ describe('summariseLeaks', () => {
         expect(summary.leaks).toEqual([]);
         expect(summary.openLines).toEqual([]);
         expect(summary.byLeakType).toEqual([]);
+        expect(summary.byOpenLineType).toEqual([]);
         expect(summary.leakTotals.count).toBe(0);
     });
 });

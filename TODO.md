@@ -153,7 +153,13 @@ allowed to push the ship date.
 - [x] Open-line / self-ventilation totalled separately with its own label —
       "Self-ventilation / open lines — not a leak", own section, never summed
       into the leak total
-- [x] One Recharts bar chart — loss by leak type (`LossByTypeChart`)
+- [x] Two Recharts bar charts, one per category — "Loss by leak type" and
+      "Loss by open-line type" (`LossByTypeChart`, reused). Originally one
+      combined chart grouped by `summariseLeaks`' unfiltered record list,
+      which put a self-ventilation bar on the same "leak type" axis as real
+      leaks — caught during pre-sign-off review against a Vercel preview,
+      fixed by splitting `LeakSummary.byLeakType` into `byLeakType` (leaks
+      only) and a new `byOpenLineType` (see DECISIONS.md, 2026-09-09)
 - [x] CSV export (`src/register/csv.ts`, `buildCsv`, unit tested). Every
       numeric cell is rounded at export — position to a whole pixel, power to
       three significant figures, energy/cost to a whole unit, diameter/bore

@@ -228,7 +228,7 @@ function LossByTypeChart({ rows, tariffIsSet }: { rows: LeakTypeLoss[]; tariffIs
     .sort((a, b) => b.value - a.value)
 
   if (data.length === 0) {
-    return <p style={captionStyle}>Nothing logged yet — the chart appears once leaks are recorded.</p>
+    return <p style={captionStyle}>Nothing logged yet — the chart appears once a record exists.</p>
   }
 
   return (
@@ -409,6 +409,8 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
             {summary.openLineTotals.count} logged
           </span>
         </div>
+        <h2 style={{ fontSize: 14, margin: '12px 0 4px' }}>Loss by open-line type</h2>
+        <LossByTypeChart rows={summary.byOpenLineType} tariffIsSet={tariffIsSet} />
         <RegisterTable
           rows={summary.openLines}
           records={recordsById}
