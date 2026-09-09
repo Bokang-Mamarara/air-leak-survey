@@ -194,16 +194,41 @@ items are what the user is checking before Phase 5 closes.
 
 ## Day 6 — Settings
 
-- [ ] "Clear all records" control — wipes `db.leakRecords` for the device.
-      Needed repeatedly through the rest of this week to reset test data
-      before a demo (see DECISIONS.md, 2026-09-08); a confirmation step
-      first, since it's destructive and there's no undo
-- [ ] Tariff table, blank by default
-- [ ] Compressor specific power, blank by default
-- [ ] Discharge coefficients, line pressure per level, operating hours
-- [ ] Settings persisted to Dexie
-- [ ] Blank tariff shows "tariff not set", never R0
-- [ ] Photo capture — only if time remains
+- [x] "Clear all records" control — wipes `db.leakRecords` for the device,
+      landed first as asked. `window.confirm` names the live record count
+      (via `liveQuery`) before deleting; settings table untouched, verified
+      by construction (separate Dexie table, only `leakRecords.clear()` is
+      called)
+- [x] Tariff table, blank by default — 12 rate/hours fields + source, all
+      empty until every one validates (`tryBuildTariff`, `tariffDraft.ts`,
+      13 tests). A half-filled tariff persists as a *draft*, separate from
+      `CalcSettings.tariff`, so navigating away doesn't discard it —
+      verified live: typed one rate, reloaded the whole app, the draft and
+      its "1 of 12 rates entered" progress line were both still there
+- [x] Compressor specific power, blank by default — plus source,
+      isentropic efficiency, polytropic exponent, stage count, discharge
+      pressure, inlet temperature
+- [x] Discharge coefficients (sharp-edged, open line), line pressure,
+      operating hours, diameter uncertainty fraction. Sharp-edged/open-line
+      controls state which catalogue entries they affect and name the one
+      leak type (`missing-blank-open-branch`) deliberately excluded — group
+      membership computed from `LEAK_TYPE_CATALOGUE`, not hand-typed
+      (`dischargeCoefficientGroups.ts`, 7 tests)
+- [x] Atmospheric pressure and the open-line coefficient uncertainty
+      fraction — collapsed under "Advanced", not hidden as unsupported
+- [x] Settings persisted to Dexie (`settings` table, version 2,
+      `src/data/settingsStorage.ts`), loaded non-blocking — map still
+      renders first, `DEFAULT_CALC_SETTINGS` applies until the stored row
+      arrives
+- [x] Blank tariff shows "tariff not set", never R0 — unchanged register
+      behaviour, now reading a real (possibly still-null) `settings.tariff`
+      instead of the hardcoded default
+- [x] **Gate:** changing specific power changes the register figures —
+      verified live in Chrome against `npm run preview`: set specific
+      power to 6 in Settings, the register's Power column and tooltip
+      switched from "Theoretical polytropic…" to "Site compressor data, 6
+      kW per m3/s…" immediately, and survived a full page reload
+- [ ] Photo capture — not started, no time left in the day's budget
 
 ## Day 7 — README and ship
 

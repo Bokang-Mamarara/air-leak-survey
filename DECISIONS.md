@@ -644,3 +644,71 @@ never affected — only the chart's grouping. Fix: `byLeakType` now groups
 `RegisterScreen.tsx` renders a second, separate "Loss by open-line type"
 chart inside the existing self-ventilation section rather than folding it
 into the leak chart.
+
+**2026-09-09 — Settings screen's discharge-coefficient scoping, and what it
+deliberately doesn't touch.** `CalcSettings` has no standalone "sharp-edged"
+or "open-line" coefficient field — each `LeakTypeDefinition` in
+`settings.leakTypes` carries its own `dischargeCoefficient`, so the settings
+screen's two coefficient controls (spec section asking for "discharge
+coefficients: sharp-edged, open line") have to work by re-applying a value
+across a group of catalogue entries, not by writing one field. The catalogue
+has three distinct coefficient values, not two: five leak types on
+`DISCHARGE_COEFFICIENTS.sharpEdged` (0.61), one leak type
+(`missing-blank-open-branch`) on `.rounded` (0.8) because it discharges like
+a machined bore rather than a torn edge, and the two `deliberate-open-line`
+types also on `.rounded` (0.8) for the unrelated reason logged 2026-09-08.
+`missing-blank-open-branch` sharing open line's *current* numeric value is a
+coincidence of today's defaults, not a domain relationship — so it is
+excluded from both groups on purpose (`dischargeCoefficientGroups.ts`), and
+the settings screen names it in the sharp-edged control's help text so a
+user who changes that slider and sees one row not move has an answer
+already on screen instead of a support question. Group membership is
+computed from `LEAK_TYPE_CATALOGUE` (the shipped defaults) once, at module
+load — not from the live, possibly-already-edited `settings.leakTypes` —
+because matching on "whichever entries currently equal
+`DISCHARGE_COEFFICIENTS.sharpEdged`" stops working the moment that value is
+changed away from 0.61 for the first time; deriving from the fixed source
+catalogue instead means a second, third, or tenth edit keeps affecting the
+same five entries regardless of what number is currently sitting in them.
+
+**2026-09-09 — A tariff draft that is not a `TariffSchedule`, so a
+half-typed tariff survives navigating away without ever being costed as
+real.** `TariffSchedule` (and `CalcSettings.tariff`) is deliberately
+all-or-nothing — `cost.ts` depends on every field being present, and rule 3
+means there is no such thing as a partially-known tariff that produces a
+number. But the settings screen asks for twelve numbers and a source in one
+sitting, and losing eleven of them because the phone locked mid-entry would
+make the form actively hostile to use. Considered and rejected: relaxing
+`TariffSchedule` itself to allow partial fields, which would have pushed the
+"is this tariff actually usable" question into every caller of `cost.ts`
+instead of answering it once. Instead, a new `TariffDraftFields` type
+(`src/settings/tariffDraft.ts`) holds the same twelve-plus-one shape as
+strings, persisted in its own `tariffDraft` field on the Dexie settings row
+— a sibling to `settings: CalcSettings` on that row, not a field inside
+`CalcSettings` itself, so the "settings shape must be `CalcSettings`" rule
+holds. `settings.tariff` stays `null`, and the register keeps showing
+"tariff not set", until `tryBuildTariff` sees all twelve numbers and a
+non-blank source at once; the moment any of those thirteen fields is
+cleared again, the built tariff reverts to `null` immediately, which is the
+same "unknown means null, never a stale guess" behaviour as everywhere else
+in this project. Verified live in Chrome (`npm run preview`): typed one
+rate, reloaded the app, the draft and its "1 of 12 rates entered" progress
+line were both intact.
+
+**2026-09-09 — Settings help text is duplicated from `constants.ts`
+comments, on purpose, for now.** Every field on the settings screen shows
+the same reasoning as the matching constant's source comment in
+`src/calc/constants.ts` (rule 2: every constant is overridable from
+settings, with a source). TypeScript strips comments at compile time, so
+`SettingsScreen.tsx` cannot import that prose — it is hand-transcribed into
+`src/settings/helpText.ts` instead, which means the two copies can drift if
+a constant's reasoning changes later and this file isn't updated to match.
+The real fix is exporting these strings as values from `constants.ts`
+itself, next to the numbers they describe, the way `REALISED_SAVING_CAVEAT`
+already is — every settings-screen string turned into an importable
+constant instead of a comment. Not done today: `constants.ts` is
+`src/calc/`, the module a reviewer reads first, and turning its every
+comment into a parallel exported string during a one-day settings phase
+risked destabilizing the file the whole project is built to show off, for a
+UI-layer convenience. Logged here so it's picked up deliberately later
+rather than accreting one string at a time.

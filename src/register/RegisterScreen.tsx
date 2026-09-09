@@ -11,9 +11,9 @@ import {
   YAxis,
 } from 'recharts'
 import {
-  DEFAULT_CALC_SETTINGS,
   REALISED_SAVING_CAVEAT,
   summariseLeaks,
+  type CalcSettings,
   type LeakResult,
   type LeakTypeLoss,
   type LoggedLeak,
@@ -27,7 +27,9 @@ import { bandBasis, buildCsv } from './csv.ts'
 const REPAIR_STATUSES: RepairStatus[] = ['open', 'scheduled', 'repaired', 'verified']
 
 interface RegisterScreenProps {
+  settings: CalcSettings
   onBack: () => void
+  onOpenSettings: () => void
 }
 
 const navButtonStyle = {
@@ -145,10 +147,17 @@ interface RegisterTableProps {
   rows: SummarisedLeak[]
   records: Map<string, LeakRecord>
   diameterLabel: string
+  settings: CalcSettings
   onRepairStatusChange: (id: string, status: RepairStatus) => void
 }
 
-function RegisterTable({ rows, records, diameterLabel, onRepairStatusChange }: RegisterTableProps) {
+function RegisterTable({
+  rows,
+  records,
+  diameterLabel,
+  settings,
+  onRepairStatusChange,
+}: RegisterTableProps) {
   if (rows.length === 0) {
     return <p style={captionStyle}>None logged yet.</p>
   }
@@ -178,7 +187,7 @@ function RegisterTable({ rows, records, diameterLabel, onRepairStatusChange }: R
                 </td>
                 <td style={tdStyle}>
                   {row.result.equivalentDiameterMm ? (
-                    <span title={bandBasis(row.result, DEFAULT_CALC_SETTINGS)}>
+                    <span title={bandBasis(row.result, settings)}>
                       {formatRange(row.result.equivalentDiameterMm, 1)} mm
                     </span>
                   ) : (
@@ -270,7 +279,7 @@ function LossByTypeChart({ rows, tariffIsSet }: { rows: LeakTypeLoss[]; tariffIs
   )
 }
 
-export function RegisterScreen({ onBack }: RegisterScreenProps) {
+export function RegisterScreen({ settings, onBack, onOpenSettings }: RegisterScreenProps) {
   const [records, setRecords] = useState<LeakRecord[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -300,10 +309,10 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
       linePressureKpaG: record.linePressureKpaG,
     }))
 
-    return summariseLeaks(loggedLeaks, DEFAULT_CALC_SETTINGS)
-  }, [records])
+    return summariseLeaks(loggedLeaks, settings)
+  }, [records, settings])
 
-  const tariffIsSet = DEFAULT_CALC_SETTINGS.tariff !== null
+  const tariffIsSet = settings.tariff !== null
 
   function handleRepairStatusChange(id: string, repairStatus: RepairStatus) {
     db.leakRecords.update(id, { repairStatus }).catch((err: unknown) => {
@@ -313,7 +322,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
   }
 
   function handleExport() {
-    const csv = buildCsv(summary, recordsById, DEFAULT_CALC_SETTINGS)
+    const csv = buildCsv(summary, recordsById, settings)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -351,9 +360,14 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
           {'◀'} Map
         </button>
         <h1 style={{ fontSize: 16, margin: 0 }}>Leak register</h1>
-        <button type="button" style={navButtonStyle} onClick={handleExport}>
-          Export CSV
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="button" style={navButtonStyle} onClick={handleExport}>
+            Export CSV
+          </button>
+          <button type="button" style={navButtonStyle} onClick={onOpenSettings}>
+            Settings
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -387,6 +401,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
           rows={summary.leaks}
           records={recordsById}
           diameterLabel="Equivalent diameter"
+          settings={settings}
           onRepairStatusChange={handleRepairStatusChange}
         />
       </div>
@@ -415,6 +430,7 @@ export function RegisterScreen({ onBack }: RegisterScreenProps) {
           rows={summary.openLines}
           records={recordsById}
           diameterLabel="Nominal bore"
+          settings={settings}
           onRepairStatusChange={handleRepairStatusChange}
         />
       </div>

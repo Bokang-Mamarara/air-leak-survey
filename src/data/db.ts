@@ -9,6 +9,8 @@
  */
 
 import Dexie, { type Table } from 'dexie'
+import type { CalcSettings } from '../calc/types.ts'
+import type { TariffDraftFields } from '../settings/tariffDraft.ts'
 
 export type SyncStatus = 'pending' | 'synced' | 'failed'
 export type RepairStatus = 'open' | 'scheduled' | 'repaired' | 'verified'
@@ -54,13 +56,37 @@ export interface LeakRecord {
   repairStatus: RepairStatus
 }
 
+/** Fixed id of the one settings row this app ever stores. */
+export const SETTINGS_ROW_ID = 'singleton'
+
+/**
+ * The settings table's one row: `CalcSettings` as it exists, plus a place to
+ * hold a tariff still being typed in. `tariffDraft` is not part of
+ * `CalcSettings` and never reaches `evaluateLeak` or `cost.ts` — it exists so
+ * navigating away from a half-filled tariff form does not discard it, while
+ * `settings.tariff` stays `null` (see `src/settings/tariffDraft.ts`) until
+ * every field validates.
+ */
+export interface StoredSettingsRow {
+  id: string
+  settings: CalcSettings
+  tariffDraft?: TariffDraftFields
+}
+
 class AirLeakSurveyDatabase extends Dexie {
   leakRecords!: Table<LeakRecord, string>
+  settings!: Table<StoredSettingsRow, string>
 
   constructor() {
     super('air-leak-survey')
     this.version(1).stores({
       leakRecords: 'id, levelId, syncStatus, repairStatus',
+    })
+    // Adds the settings table only. Existing leakRecords are untouched by
+    // this upgrade — Dexie carries them forward unchanged into version 2.
+    this.version(2).stores({
+      leakRecords: 'id, levelId, syncStatus, repairStatus',
+      settings: 'id',
     })
   }
 }
