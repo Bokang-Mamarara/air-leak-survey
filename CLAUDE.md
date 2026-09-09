@@ -19,7 +19,7 @@ Do not explain thermodynamics, compressed air systems, or mining to him.
 
 <!-- Update this line at the start of every session. It is the scope fence. -->
 
-**Phase 1 — calculation module only.**
+**Phase 7 — README and deploy.**
 
 Work on the current phase only. If a task belongs to a later phase, say which
 phase it belongs to and do not write it. Scope creep is the expected failure
