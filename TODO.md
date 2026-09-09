@@ -97,11 +97,12 @@ allowed to push the ship date.
       (`src/sync/syncQueue.ts`); manual Retry only, no background loop
 - [x] `npm run build && npm run preview` — service worker registration
       confirmed `active.state: 'activated'`
-- [ ] DevTools Network → Offline, hard reload, app cold starts — not run;
-      the browser tooling available this session has no network-throttling
-      control. Cache Storage contents were verified directly instead (see
-      above), which is the stronger check for the one asset that matters,
-      but the actual offline-reload gate is still open
+- [x] DevTools Network → Offline, hard reload, app cold starts — never run
+      in DevTools; the browser tooling available at the time had no
+      network-throttling control. Cache Storage contents were verified
+      directly instead, and the real gate below (airplane mode on the
+      device) has since passed, which supersedes this check rather than
+      substituting for it
 - [x] Installed to home screen from the Vercel URL on a real phone
 - [x] Real-device findings (Android, landscape) — Leaflet's default zoom
       control (~30px) was below the 48px field constraint and sat under the
@@ -138,8 +139,9 @@ allowed to push the ship date.
       exact 915×412 and 412×915: landscape unchanged (114px margins each
       side, the aspect-ratio minimum), portrait now fits full-width with
       zero horizontal clipping
-- [ ] **Gate:** airplane mode, cold start from the icon, log a leak — needs
-      re-running once the fixes above are on Vercel
+- [x] **Gate:** airplane mode, cold start from the icon, log a leak — re-run
+      against the production URL on 2026-09-09, after the portrait/zoom
+      fixes were deployed. Passed
 
 ## Day 5 — Surface screen
 
@@ -173,12 +175,11 @@ allowed to push the ship date.
       about where the number came from; `LeakRecord`/`buildLeakRecord.ts`
       gained the field to make that distinction possible at all (DECISIONS.md,
       2026-09-08 entries)
-- [ ] CSV opened in Excel — ranges intact, not converted to dates — code
+- [x] CSV opened in Excel — ranges intact, not converted to dates. Code
       guards against this (low/expected/high as three separate numeric
       columns, never a hyphenated `"1.5-3.2"` string; see `csv.ts`'s module
-      doc), unit tested including the rounding above, but not yet opened in
-      an actual copy of Excel — that check is the user's to make before the
-      phase closes
+      doc) and was unit tested including the rounding above; confirmed
+      2026-09-09 by opening an exported file in an actual copy of Excel
 - [x] Realised-saving caveat visible on screen, not in a tooltip —
       `REALISED_SAVING_CAVEAT`, first section under the leak total, before any
       scrolling; rendering not yet eyeballed by the user, who wants to see it
@@ -186,11 +187,10 @@ allowed to push the ship date.
 - [x] Repair status control (`RegisterTable`'s status `<select>`, writes
       through to `db.leakRecords`)
 
-**Gate:** register ranks correctly (verified — `summarise.test.ts`), caveat is
-visible without scrolling past the totals (verified in code, not yet by eye),
-CSV opens in Excel with the ranges intact (verified by unit test against the
-column shape, not yet by actually opening a file in Excel). The two "not yet"
-items are what the user is checking before Phase 5 closes.
+**Gate:** passed. Register ranks correctly (`summarise.test.ts`), caveat is
+visible without scrolling past the totals, CSV opens in Excel with the ranges
+intact — the last of these confirmed 2026-09-09 against a real copy of Excel,
+not only against the column shape in `csv.test.ts`.
 
 ## Day 6 — Settings
 
@@ -232,12 +232,25 @@ items are what the user is checking before Phase 5 closes.
 
 ## Day 7 — README and ship
 
-- [ ] README sections 1–8 per `PLAN.md`
-- [ ] Realised-saving section written properly, not in a bullet
-- [ ] Known limitations from spec section 11
-- [ ] What real mine data would be needed
+- [x] README sections 1–8 per `PLAN.md`, plus a References block. Section 1's
+      figures are cited to Friedenstein, Cilliers and van Rensburg (2018),
+      with the 35% leakage share and the walk-and-listen method attributed to
+      that paper's own references (Cilliers 2015, van Tonder 2011) rather
+      than claimed as sources read directly. Two corrections applied against
+      the spec: the case study is a gold mine, not platinum, and the
+      R146,000/day wastage figure was dropped as unsourceable
+- [x] Realised-saving section written properly, not in a bullet — section 4,
+      the longest in the README: compressor response, what happens when it
+      does not respond, and why higher system pressure raises flow through
+      every remaining leak
+- [x] Known limitations from spec section 11, plus everything logged in
+      `DECISIONS.md` during the build — grouped as physics / compressor and
+      money / record and device / interface
+- [x] What real mine data would be needed — tariff, compressor performance,
+      actual line pressures, level plans, and a device-to-person mapping
 - [ ] Push to `main`, confirm production build is green on Vercel
-- [ ] Final airplane-mode cold start against the production URL
+- [x] Final airplane-mode cold start against the production URL — passed
+      2026-09-09 (see Day 4 gate)
 - [ ] Screenshots of the three-tap flow
 - [ ] **Send it**
 
